@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Navbar } from './components/Navbar';
 import { LandingPage } from './components/LandingPage';
 import { AssessmentForm } from './components/AssessmentForm';
@@ -22,6 +22,11 @@ export function App() {
   const handleRetakeTest = () => {
     setTestResult(null);
   };
+
+  // Scroll ke atas setiap ganti halaman
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, [currentTab]);
 
   return (
     <div className="min-w-[320px] min-h-screen bg-[#faf3f6] text-slate-900 flex flex-col font-sans selection:bg-rose-100 selection:text-rose-700 relative overflow-x-hidden">
@@ -67,20 +72,16 @@ export function App() {
       <div className="fixed bottom-20 sm:bottom-6 right-4 sm:right-6 z-50">
         <button
           onClick={() => setIsFloatingChatOpen(!isFloatingChatOpen)}
-          className="flex items-center gap-2.5 px-4 py-3 rounded-full bg-gradient-to-r from-rose-500 via-pink-500 to-purple-600 text-white shadow-xl shadow-rose-300/60 hover:scale-105 active:scale-95 transition-all border-2 border-white group"
+          className="relative w-14 h-14 rounded-full overflow-hidden border-[3px] border-white shadow-xl shadow-rose-300/60 hover:scale-110 active:scale-95 transition-all"
           aria-label="Buka Chat Si Jeumpa AI"
         >
-          <div className="w-8 h-8 rounded-full overflow-hidden border-2 border-white shadow-xs flex-shrink-0 bg-white">
-            <img
-              src="/assets/mascot_si_jeumpa_aceh.jpg"
-              alt="Mascot Si Jeumpa Floating Button"
-              className="w-full h-full object-cover"
-            />
-          </div>
-
-          <span className="text-xs font-black tracking-tight text-white pr-1">
-            Si Jeumpa AI 🌸
-          </span>
+          {/* Gradient ring pulse */}
+          <span className="absolute inset-0 rounded-full bg-gradient-to-br from-rose-400 via-pink-500 to-purple-600 animate-pulse opacity-40 pointer-events-none" />
+          <img
+            src="/assets/mascot_si_jeumpa_aceh.jpg"
+            alt="Si Jeumpa AI"
+            className="w-full h-full object-cover"
+          />
         </button>
       </div>
 

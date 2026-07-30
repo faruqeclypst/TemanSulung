@@ -4,7 +4,6 @@ import {
   IconSparkles, 
   IconArrowRight, 
   IconShieldCheck, 
-  IconGraduationCap, 
   IconBrain, 
   IconUsers, 
   IconClock 
@@ -27,16 +26,11 @@ export const LandingPage: React.FC<LandingPageProps> = ({
       <section className="relative overflow-hidden rounded-3xl bg-white border border-rose-200/90 shadow-md p-6 sm:p-8 space-y-5">
         <div className="absolute -top-12 -right-12 w-48 h-48 bg-rose-100/60 rounded-full blur-2xl pointer-events-none"></div>
 
-        {/* Top Badges */}
-        <div className="relative z-10 flex items-center justify-between">
+        {/* Top Badge */}
+        <div className="relative z-10">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-rose-50 text-rose-700 text-xs font-bold border border-rose-200">
             <IconHeart className="w-3.5 h-3.5 text-rose-500 fill-rose-500" />
             <span>Khusus Kamu, Anak Sulung Perempuan 🌸</span>
-          </div>
-
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-100 text-slate-700 text-xs font-bold border border-slate-200">
-            <IconGraduationCap className="w-3.5 h-3.5 text-rose-600" />
-            <span>OPSI SMAN Modal Bangsa</span>
           </div>
         </div>
 
@@ -69,7 +63,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
             Hebat Banget Kamu Sudah Bertahan Sampai Hari Ini! 💕
           </h1>
           <p className="text-slate-600 text-xs sm:text-sm font-medium leading-relaxed">
-            Dikembangkan khusus sesuai riset OPSI SMAN Modal Bangsa untuk mendampingi siswi yang mengalami <strong className="text-rose-600">Eldest Daughter Syndrome</strong>.
+            Aplikasi pendamping khusus untuk siswi yang mengalami <strong className="text-rose-600">Eldest Daughter Syndrome</strong> — anak sulung perempuan yang berjuang menyeimbangkan tugas rumah &amp; sekolah.
           </p>
         </div>
 
@@ -94,7 +88,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
           </div>
           <div>
             <h2 className="text-sm font-extrabold text-slate-900">4 Pilar Intervensi Model RISE</h2>
-            <p className="text-[11px] text-slate-500 font-medium">Proposal OPSI SMAN Modal Bangsa</p>
+            <p className="text-[11px] text-slate-500 font-medium">Berbasis riset resiliensi akademik Martin &amp; Marsh (2006)</p>
           </div>
         </div>
 
@@ -221,7 +215,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
       {/* Trust Footer */}
       <div className="bg-white/80 backdrop-blur-md p-4 rounded-2xl border border-slate-200/80 text-center text-xs text-slate-500 font-medium flex items-center justify-center gap-2">
         <IconShieldCheck className="w-4 h-4 text-emerald-500" />
-        <span>Riset OPSI SMAN Modal Bangsa • Bebas Login &amp; Tersimpan Privat di HP.</span>
+        <span>Bebas Login &amp; Tersimpan Privat di HP Kamu.</span>
       </div>
     </div>
   );
