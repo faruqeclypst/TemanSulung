@@ -72,16 +72,21 @@ export function App() {
       <div className="fixed bottom-20 sm:bottom-6 right-4 sm:right-6 z-50">
         <button
           onClick={() => setIsFloatingChatOpen(!isFloatingChatOpen)}
-          className="relative w-14 h-14 rounded-full overflow-hidden border-[3px] border-white shadow-xl shadow-rose-300/60 hover:scale-110 active:scale-95 transition-all"
+          className="relative w-16 h-16 rounded-full overflow-hidden border-[3px] border-white shadow-xl shadow-rose-300/60 hover:scale-110 active:scale-95 transition-all"
           aria-label="Buka Chat Si Jeumpa AI"
         >
-          {/* Gradient ring pulse */}
-          <span className="absolute inset-0 rounded-full bg-gradient-to-br from-rose-400 via-pink-500 to-purple-600 animate-pulse opacity-40 pointer-events-none" />
+          {/* Pulse ring */}
+          <span className="absolute inset-0 rounded-full bg-gradient-to-br from-rose-400 via-pink-500 to-purple-600 animate-pulse opacity-30 pointer-events-none" />
+          {/* Mascot photo */}
           <img
             src="/assets/mascot_si_jeumpa_aceh.jpg"
             alt="Si Jeumpa AI"
             className="w-full h-full object-cover"
           />
+          {/* Label teks "Chat AI" di dalam bawah */}
+          <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-rose-600/90 to-transparent pt-3 pb-1 flex items-end justify-center">
+            <span className="text-white font-black leading-none" style={{ fontSize: '8px', letterSpacing: '0.04em' }}>Chat AI</span>
+          </div>
         </button>
       </div>
 
