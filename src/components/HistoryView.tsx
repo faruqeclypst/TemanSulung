@@ -4,20 +4,15 @@ import {
   getSavedResults, 
   getSavedJournals, 
   getActiveUserProfile, 
-  getUserProfiles,
-  setActiveUserProfile 
+  getUserProfiles 
 } from '../services/storage';
 import { SimpleResult, CBTJournalEntry, UserProfile } from '../types';
 
 export const HistoryView: React.FC = () => {
-  const [profiles, setProfiles] = useState<UserProfile[]>(getUserProfiles());
-  const [activeUser, setActiveUser] = useState<UserProfile | null>(getActiveUserProfile());
-  const [selectedFilterName, setSelectedFilterName] = useState<string>(
-    activeUser ? activeUser.name : 'all'
-  );
-
+  const [activeUser, setActiveUser] = useState<UserProfile | null>(() => getActiveUserProfile());
   const [results, setResults] = useState<SimpleResult[]>([]);
   const [journals, setJournals] = useState<CBTJournalEntry[]>([]);
+  const [searchTerm, setSearchTerm] = useState<string>('');
 
   // Pastel Color Themes for Padlet Cards
   const CARD_THEMES = [
@@ -28,103 +23,137 @@ export const HistoryView: React.FC = () => {
     { bg: 'bg-sky-50/90', border: 'border-sky-200', text: 'text-sky-900', badge: 'bg-sky-200/80 text-sky-900', pin: '☁️' },
   ];
 
+  const isAdminActive = activeUser?.id === 'admin_bk' || activeUser?.username === 'admin';
+
+  // Reactively sync activeUser session & load records (All records for Admin, Private for Student)
   useEffect(() => {
-    loadData();
-  }, [selectedFilterName]);
+    const syncActiveUser = () => {
+      const current = getActiveUserProfile();
+      setActiveUser(current);
 
-  const loadData = () => {
-    const filter = selectedFilterName === 'all' ? undefined : selectedFilterName;
-    setResults(getSavedResults(filter));
-    setJournals(getSavedJournals(filter));
-  };
+      const isAdmin = current?.id === 'admin_bk' || current?.username === 'admin';
 
-  const handleSelectFilter = (name: string) => {
-    setSelectedFilterName(name);
-    if (name !== 'all') {
-      const found = profiles.find((p) => p.name.toLowerCase() === name.toLowerCase());
-      if (found) {
-        setActiveUserProfile(found);
-        setActiveUser(found);
+      if (isAdmin) {
+        // Admin gets access to ALL student test results & ALL student CBT journals
+        const allRes = getSavedResults();
+        const allJournals = getSavedJournals();
+        setResults(allRes);
+        setJournals(allJournals);
+      } else if (current) {
+        // Student gets access strictly to her own private records
+        const allRes = getSavedResults(current.name);
+        const allJournals = getSavedJournals(current.name);
+
+        const studentRes = allRes.filter((r) =>
+          (r?.studentName || '').toLowerCase() === current.name.toLowerCase() ||
+          (r?.studentName || '').toLowerCase() === (current.username || '').toLowerCase()
+        );
+        const studentJournals = allJournals.filter((j) =>
+          (j?.studentName || '').toLowerCase() === current.name.toLowerCase() ||
+          (j?.studentName || '').toLowerCase() === (current.username || '').toLowerCase()
+        );
+
+        setResults(studentRes);
+        setJournals(studentJournals);
+      } else {
+        setResults([]);
+        setJournals([]);
       }
-    }
-  };
+    };
+
+    syncActiveUser();
+    const timer = setInterval(syncActiveUser, 400);
+    window.addEventListener('storage', syncActiveUser);
+
+    return () => {
+      clearInterval(timer);
+      window.removeEventListener('storage', syncActiveUser);
+    };
+  }, [activeUser?.id]);
+
+  // Filtered lists for Admin search
+  const filteredResults = results.filter((r) => {
+    if (!searchTerm.trim()) return true;
+    const query = searchTerm.toLowerCase();
+    return (r?.studentName || '').toLowerCase().includes(query) || (r?.summary || '').toLowerCase().includes(query);
+  });
+
+  const filteredJournals = journals.filter((j) => {
+    if (!searchTerm.trim()) return true;
+    const query = searchTerm.toLowerCase();
+    return (j?.studentName || '').toLowerCase().includes(query) || (j?.curhatan || '').toLowerCase().includes(query) || (j?.saranPositif || '').toLowerCase().includes(query);
+  });
+
+  if (!activeUser) {
+    return (
+      <div className="max-w-md mx-auto my-12 p-8 bg-white/95 backdrop-blur-md rounded-3xl border border-rose-100 shadow-xl text-center space-y-4 animate-fade-in">
+        <div className="w-16 h-16 bg-rose-100 rounded-2xl flex items-center justify-center mx-auto text-rose-600 shadow-xs">
+          <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+          </svg>
+        </div>
+        <h2 className="text-xl font-black text-slate-800">Catatan &amp; Jurnal CBT Privasi</h2>
+        <p className="text-xs text-slate-500 leading-relaxed">
+          Sesi profil Anda sedang <strong>Keluar / Offline</strong>. Silakan login atau pilih profil Anda melalui menu kanan atas untuk melihat catatan &amp; hasil tes rahasia Anda.
+        </p>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-4xl mx-auto space-y-6 animate-slide-up pb-16">
       {/* Padlet Board Header */}
       <div className="bg-white/90 backdrop-blur-md p-6 rounded-3xl border border-rose-200 shadow-sm text-center space-y-3 relative overflow-hidden">
         <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-rose-100 text-rose-700 text-xs font-black border border-rose-200">
-          <span>📌 Papan Catatan Padlet TemanSulung</span>
+          <span>{isAdminActive ? '🛡️ Papan Catatan & Jurnal Seluruh Siswi (Mode Admin BK)' : `📌 Papan Catatan & Jurnal @${activeUser.username || activeUser.name}`}</span>
         </div>
 
         <h1 className="text-xl sm:text-2xl font-black text-slate-900">
-          Papan Catatan &amp; Sticky Notes
+          {isAdminActive ? 'Pemantauan Catatan Skrining & Refleksi Siswi' : 'Riwayat Skrining & Jurnal Refleksi CBT'}
         </h1>
-
-        <p className="text-xs text-slate-600 font-medium max-w-md mx-auto">
-          Tampilan gaya Padlet papan tempel interaktif untuk riwayat tes resiliensi &amp; jurnal curhatan AI.
+        <p className="text-xs text-slate-500 font-medium max-w-lg mx-auto leading-relaxed">
+          {isAdminActive 
+            ? 'Sebagai Admin / Konselor BK, Anda dapat memantau seluruh hasil skrining resiliensi dan jurnal curhat CBT milik semua siswi SMAN Modal Bangsa.' 
+            : 'Semua catatan hasil evaluasi dan kalimat reframing positif Si Jeumpa AI milikmu tersimpan rapi dan aman di sini.'}
         </p>
 
-        {/* User Filter Selector */}
-        {profiles.length > 0 && (
-          <div className="pt-2 flex justify-center items-center gap-1.5 flex-wrap">
-            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block w-full">
-              Filter Papan Profil:
-            </span>
-
-            <button
-              onClick={() => handleSelectFilter('all')}
-              className={`px-3.5 py-1.5 rounded-full text-xs font-extrabold transition-all border ${
-                selectedFilterName === 'all'
-                  ? 'bg-rose-500 text-white border-rose-500 shadow-2xs'
-                  : 'bg-slate-100 text-slate-600 border-slate-200 hover:bg-slate-200'
-              }`}
-            >
-              Semua ({getSavedResults().length})
-            </button>
-
-            {profiles.map((p) => (
-              <button
-                key={p.id}
-                onClick={() => handleSelectFilter(p.name)}
-                className={`px-3.5 py-1.5 rounded-full text-xs font-extrabold transition-all border ${
-                  selectedFilterName.toLowerCase() === p.name.toLowerCase()
-                    ? 'bg-purple-600 text-white border-purple-600 shadow-2xs'
-                    : 'bg-slate-100 text-slate-600 border-slate-200 hover:bg-slate-200'
-                }`}
-              >
-                {p.name} ({getSavedResults(p.name).length})
-              </button>
-            ))}
+        {/* Search Bar for Admin */}
+        {isAdminActive && (
+          <div className="pt-2 max-w-md mx-auto">
+            <input
+              type="text"
+              placeholder="Cari nama siswi atau isi catatan..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full px-4 py-2.5 rounded-2xl border border-slate-200 text-xs font-bold text-slate-900 bg-slate-50 focus:outline-none focus:ring-2 focus:ring-rose-400 shadow-2xs text-center"
+            />
           </div>
         )}
       </div>
 
-      {/* SECTION 1: PADLET STICKY NOTES TRUE MASONRY - RIWAYAT TES */}
+      {/* SECTION 1: PADLET STICKY NOTES MASONRY - HASIL TES */}
       <div className="space-y-3">
         <div className="flex items-center justify-between px-1">
           <h2 className="text-xs font-black uppercase tracking-wider text-slate-700 flex items-center gap-2">
-            <span>📌 Papan Hasil Tes Resiliensi</span>
+            <span>📋 Riwayat Evaluasi Resiliensi Akademik</span>
             <span className="px-2 py-0.5 rounded-full bg-rose-100 text-rose-700 text-[10px]">
-              {results.length} Catatan
+              {filteredResults.length} Catatan
             </span>
           </h2>
-
-          {selectedFilterName !== 'all' && (
-            <span className="text-[10px] text-purple-700 bg-purple-50 px-2.5 py-0.5 rounded-full border border-purple-200 font-bold">
-              Profil: {selectedFilterName}
-            </span>
-          )}
         </div>
 
-        {results.length === 0 ? (
-          <div className="bg-amber-50/60 border-2 border-dashed border-amber-200 p-8 rounded-3xl text-center text-xs text-amber-800 font-medium">
-            📌 Papan Padlet belum ada catatan tes. Lakukan tes di menu &quot;Cek Tes&quot; untuk menempelkan catatan pertamamu!
+        {filteredResults.length === 0 ? (
+          <div className="p-8 bg-white/60 backdrop-blur-sm rounded-3xl border border-dashed border-rose-200 text-center space-y-2">
+            <p className="text-xs font-bold text-slate-500">
+              {isAdminActive ? 'Belum ada data riwayat tes resiliensi siswi.' : `Belum ada riwayat tes resiliensi untuk ${activeUser.name}.`}
+            </p>
+            {!isAdminActive && (
+              <p className="text-[11px] text-slate-400">Klik menu "Cek Tes" untuk memulai evaluasi pertama kamu!</p>
+            )}
           </div>
         ) : (
-          /* True CSS Masonry Columns - zero vertical gap */
           <div className="columns-1 sm:columns-2 md:columns-3 gap-4 space-y-4">
-            {results.map((r, idx) => {
+            {filteredResults.map((r, idx) => {
               const theme = CARD_THEMES[idx % CARD_THEMES.length];
               const rotation = idx % 2 === 0 ? 'rotate-[-1deg]' : 'rotate-[1deg]';
 
@@ -133,11 +162,9 @@ export const HistoryView: React.FC = () => {
                   key={r.id}
                   className={`break-inside-avoid relative p-5 rounded-3xl border-2 ${theme.bg} ${theme.border} shadow-md transition-all hover:scale-[1.02] hover:shadow-lg ${rotation} space-y-3 mb-4`}
                 >
-                  {/* Tape Strip Accent */}
                   <div className="w-12 h-3 bg-white/80 backdrop-blur-sm rounded-xs shadow-2xs rotate-[-2deg] mx-auto -mt-7 mb-1 border border-slate-200/50"></div>
 
                   <div className="space-y-2">
-                    {/* Header Note */}
                     <div className="flex items-start justify-between border-b border-slate-900/10 pb-2">
                       <div className="flex items-center gap-2">
                         <span className="w-7 h-7 rounded-full bg-white/80 border border-slate-300 text-slate-800 flex items-center justify-center font-black text-xs shadow-2xs">
@@ -152,10 +179,9 @@ export const HistoryView: React.FC = () => {
                       <span className="text-base">{theme.pin}</span>
                     </div>
 
-                    {/* Score Badge & Status */}
                     <div className="space-y-1">
                       <div className="flex items-center justify-between">
-                        <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-black border ${r.statusBadge}`}>
+                        <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black bg-white/80 border border-slate-200 text-slate-800">
                           {r.statusText}
                         </span>
                         <span className="text-xs font-black text-slate-900">
@@ -169,7 +195,6 @@ export const HistoryView: React.FC = () => {
                     </div>
                   </div>
 
-                  {/* Footer Date */}
                   <div className="pt-2 border-t border-slate-900/10 flex items-center justify-between text-[10px] font-bold text-slate-500">
                     <span className="flex items-center gap-1">
                       <IconCalendar className="w-3 h-3 text-slate-400" />
@@ -184,56 +209,59 @@ export const HistoryView: React.FC = () => {
         )}
       </div>
 
-      {/* SECTION 2: PADLET STICKY NOTES TRUE MASONRY - CURHATAN AI */}
-      {journals.length > 0 && (
-        <div className="space-y-3 pt-4">
-          <div className="flex items-center justify-between px-1">
-            <h2 className="text-xs font-black uppercase tracking-wider text-slate-700 flex items-center gap-2">
-              <span>💬 Papan Tempel Curhatan Si Jeumpa AI</span>
-              <span className="px-2 py-0.5 rounded-full bg-purple-100 text-purple-700 text-[10px]">
-                {journals.length} Jurnal
-              </span>
-            </h2>
-          </div>
+      {/* SECTION 2: PADLET STICKY NOTES MASONRY - CURHATAN AI */}
+      <div className="space-y-3 pt-4">
+        <div className="flex items-center justify-between px-1">
+          <h2 className="text-xs font-black uppercase tracking-wider text-slate-700 flex items-center gap-2">
+            <span>💬 Papan Tempel Curhatan Si Jeumpa AI</span>
+            <span className="px-2 py-0.5 rounded-full bg-purple-100 text-purple-700 text-[10px]">
+              {filteredJournals.length} Jurnal
+            </span>
+          </h2>
+        </div>
 
-          {/* True CSS Masonry Columns - zero vertical gap */}
+        {filteredJournals.length === 0 ? (
+          <div className="p-8 bg-white/60 backdrop-blur-sm rounded-3xl border border-dashed border-purple-200 text-center space-y-2">
+            <p className="text-xs font-bold text-slate-500">Belum ada catatan jurnal CBT Si Jeumpa.</p>
+            <p className="text-[11px] text-slate-400">Curahkan isi hatimu di tombol Chat AI Si Jeumpa untuk otomatis disimpan di sini!</p>
+          </div>
+        ) : (
           <div className="columns-1 sm:columns-2 md:columns-3 gap-4 space-y-4">
-            {journals.map((j, idx) => {
-              const rotation = idx % 2 === 0 ? 'rotate-[1deg]' : 'rotate-[-1.5deg]';
+            {filteredJournals.map((j, idx) => {
+              const theme = CARD_THEMES[(idx + 2) % CARD_THEMES.length];
+              const rotation = idx % 2 === 0 ? 'rotate-[1deg]' : 'rotate-[-1deg]';
+
               return (
                 <div
                   key={j.id}
-                  className={`break-inside-avoid relative p-5 rounded-3xl border-2 bg-purple-50/90 border-purple-200 shadow-md transition-all hover:scale-[1.02] ${rotation} space-y-2.5 mb-4`}
+                  className={`break-inside-avoid relative p-5 rounded-3xl border-2 ${theme.bg} ${theme.border} shadow-md transition-all hover:scale-[1.02] hover:shadow-lg ${rotation} space-y-3 mb-4`}
                 >
-                  {/* Tape Strip Accent */}
-                  <div className="w-12 h-3 bg-white/80 backdrop-blur-sm rounded-xs shadow-2xs rotate-[1deg] mx-auto -mt-7 mb-1 border border-slate-200/50"></div>
+                  <div className="w-12 h-3 bg-white/80 backdrop-blur-sm rounded-xs shadow-2xs rotate-[2deg] mx-auto -mt-7 mb-1 border border-slate-200/50"></div>
 
                   <div className="space-y-2 text-xs">
-                    <div className="flex items-center justify-between border-b border-purple-200/60 pb-1.5">
-                      <span className="font-extrabold text-purple-900 text-[11px]">
-                        👤 {j.studentName ? j.studentName : 'Kamu'}
-                      </span>
-                      <span className="text-xs">🌸</span>
+                    <div className="flex items-center justify-between border-b border-slate-900/10 pb-2">
+                      <span className="font-extrabold text-slate-900">{j.studentName || 'Siswi'}</span>
+                      <span className="text-[10px] text-slate-500 font-bold">{new Date(j.date).toLocaleDateString('id-ID')}</span>
                     </div>
 
-                    <div className="bg-white/80 p-2.5 rounded-xl border border-purple-100 text-slate-700 font-bold italic">
-                      &quot;{j.curhatan}&quot;
-                    </div>
+                    <div className="space-y-2">
+                      <div className="bg-white/70 p-3 rounded-2xl border border-slate-200/50">
+                        <span className="text-[10px] font-black text-rose-500 uppercase block mb-0.5">Ungkapan Perasaan:</span>
+                        <p className="text-slate-800 font-medium italic">"{j.curhatan}"</p>
+                      </div>
 
-                    <div className="text-purple-900 font-medium text-[11px] leading-relaxed pt-0.5">
-                      <strong>Si Jeumpa AI:</strong> {j.saranPositif}
+                      <div className="bg-emerald-50/80 p-3 rounded-2xl border border-emerald-200/60">
+                        <span className="text-[10px] font-black text-emerald-700 uppercase block mb-0.5">Reframing CBT Si Jeumpa:</span>
+                        <p className="text-emerald-950 font-bold">{j.saranPositif}</p>
+                      </div>
                     </div>
-                  </div>
-
-                  <div className="text-[9px] font-bold text-purple-400 text-right pt-1 border-t border-purple-200/40">
-                    {new Date(j.date).toLocaleDateString('id-ID')}
                   </div>
                 </div>
               );
             })}
           </div>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   );
 };

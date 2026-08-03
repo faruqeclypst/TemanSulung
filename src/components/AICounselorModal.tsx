@@ -8,13 +8,14 @@ import {
   ChatMessage, 
   getActiveUserProfile 
 } from '../services/storage';
+import { UserProfile } from '../types';
 
 interface AICounselorModalProps {
   onClose?: () => void;
 }
 
 export const AICounselorModal: React.FC<AICounselorModalProps> = ({ onClose }) => {
-  const activeUser = getActiveUserProfile();
+  const [activeUser, setActiveUser] = useState<UserProfile | null>(() => getActiveUserProfile());
   const [messages, setMessages] = useState<ChatMessage[]>(() => getSavedChatMessages());
   const [input, setInput] = useState<string>('');
   const [isLoading, setIsLoading] = useState<boolean>(false);
@@ -25,8 +26,18 @@ export const AICounselorModal: React.FC<AICounselorModalProps> = ({ onClose }) =
   };
 
   useEffect(() => {
+    const sync = () => {
+      const u = getActiveUserProfile();
+      setActiveUser(u);
+    };
+    sync();
+    const interval = setInterval(sync, 400);
+    return () => clearInterval(interval);
+  }, []);
+
+  useEffect(() => {
     setMessages(getSavedChatMessages());
-  }, [activeUser?.name]);
+  }, [activeUser?.id]);
 
   useEffect(() => {
     scrollToBottom();
@@ -95,7 +106,7 @@ export const AICounselorModal: React.FC<AICounselorModalProps> = ({ onClose }) =
   ];
 
   return (
-    <div className="w-full max-w-lg mx-auto bg-white rounded-3xl border border-purple-200 shadow-2xl overflow-hidden flex flex-col max-h-[85vh] sm:max-h-[600px] animate-slide-up">
+    <div className="fixed top-16 sm:top-20 bottom-4 sm:bottom-6 right-4 sm:right-6 w-[calc(100vw-32px)] sm:w-96 max-h-[calc(100vh-84px)] z-[999] bg-white rounded-3xl border border-purple-200 shadow-2xl overflow-hidden flex flex-col animate-slide-up">
       {/* Visual Header with Mascot Si Jeumpa & Active Profile Name */}
       <div className="bg-gradient-to-r from-purple-600 to-rose-500 p-4 text-white flex items-center justify-between shadow-md">
         <div className="flex items-center gap-3">

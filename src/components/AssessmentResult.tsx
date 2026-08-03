@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { 
   IconHeart, 
   IconSparkles, 
@@ -25,6 +25,10 @@ export const AssessmentResultView: React.FC<AssessmentResultProps> = ({
   onOpenGuide,
   onRetake,
 }) => {
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, []);
+
   return (
     <div className="max-w-xl mx-auto space-y-6 animate-slide-up pb-12">
       {/* Primary Result Banner */}

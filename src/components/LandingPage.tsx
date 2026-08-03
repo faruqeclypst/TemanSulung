@@ -215,7 +215,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
       {/* Trust Footer */}
       <div className="bg-white/80 backdrop-blur-md p-4 rounded-2xl border border-slate-200/80 text-center text-xs text-slate-500 font-medium flex items-center justify-center gap-2">
         <IconShieldCheck className="w-4 h-4 text-emerald-500" />
-        <span>Bebas Login &amp; Tersimpan Privat di HP Kamu.</span>
+        <span>Profil &amp; Hasil Tes Tersimpan Online di Cloud.</span>
       </div>
     </div>
   );

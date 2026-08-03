@@ -7,13 +7,70 @@ import { AICounselorModal } from './components/AICounselorModal';
 import { RiseModulesView } from './components/RiseModules';
 import { HistoryView } from './components/HistoryView';
 import { AboutView } from './components/AboutView';
+import { AdminView } from './components/AdminView';
 import { BackgroundDoodles } from './components/BackgroundDoodles';
 import { SimpleResult } from './types';
+import { getActiveUserProfile } from './services/storage';
 
-export function App() {
-  const [currentTab, setCurrentTab] = useState<'home' | 'test' | 'guide' | 'history' | 'about'>('home');
+type TabType = 'home' | 'test' | 'guide' | 'history' | 'about' | 'admin';
+
+const getInitialTab = (): TabType => {
+  const validTabs: TabType[] = ['home', 'test', 'guide', 'history', 'about', 'admin'];
+  
+  // 1. Check URL Hash first (e.g. #admin, #history, #test)
+  const hash = window.location.hash.replace('#', '').toLowerCase();
+  if (validTabs.includes(hash as TabType)) {
+    return hash as TabType;
+  }
+
+  // 2. Check localStorage saved tab
+  const saved = localStorage.getItem('rise_active_tab') as TabType;
+  if (validTabs.includes(saved)) {
+    return saved;
+  }
+
+  return 'home';
+};
+
+export default function App() {
+  const [currentTab, setCurrentTab] = useState<TabType>(getInitialTab);
   const [testResult, setTestResult] = useState<SimpleResult | null>(null);
   const [isFloatingChatOpen, setIsFloatingChatOpen] = useState<boolean>(false);
+
+  const activeUser = getActiveUserProfile();
+
+  // Auto scroll to top whenever currentTab or testResult changes
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, [currentTab, testResult]);
+
+  // Sync tab state with URL Hash & localStorage
+  const handleSetTab = (tab: TabType) => {
+    setCurrentTab(tab);
+    localStorage.setItem('rise_active_tab', tab);
+    window.location.hash = tab;
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  // Sync browser back/forward or hash changes
+  useEffect(() => {
+    const handleHashChange = () => {
+      const hash = window.location.hash.replace('#', '').toLowerCase() as TabType;
+      const validTabs: TabType[] = ['home', 'test', 'guide', 'history', 'about', 'admin'];
+      if (validTabs.includes(hash)) {
+        setCurrentTab(hash);
+        localStorage.setItem('rise_active_tab', hash);
+      }
+    };
+
+    window.addEventListener('hashchange', handleHashChange);
+    return () => window.removeEventListener('hashchange', handleHashChange);
+  }, []);
+
+  // Reset testResult whenever active user profile changes or logs out
+  useEffect(() => {
+    setTestResult(null);
+  }, [activeUser?.id]);
 
   const handleTestComplete = (res: SimpleResult) => {
     setTestResult(res);
@@ -35,25 +92,31 @@ export function App() {
 
       {/* Header Nav with high z-index (z-50) so dropdown floats in FRONT of main content */}
       <div className="relative z-50">
-        <Navbar currentTab={currentTab} setCurrentTab={setCurrentTab} />
+        <Navbar 
+          currentTab={currentTab} 
+          setCurrentTab={handleSetTab} 
+          onProfileChanged={() => setTestResult(null)}
+        />
       </div>
 
-      {/* Main Content View Container (z-10) */}
-      <main className="flex-1 max-w-4xl w-full mx-auto p-4 sm:p-6 md:p-8 relative z-10">
+      {/* Main Content View Container (z-10) with generous top padding for fixed navbar */}
+      <main className={`flex-1 w-full mx-auto p-4 sm:p-6 md:p-8 pt-24 sm:pt-28 md:pt-32 relative z-10 pb-24 md:pb-8 ${
+        currentTab === 'admin' ? 'max-w-6xl' : 'max-w-4xl'
+      }`}>
         {currentTab === 'home' && (
           <LandingPage
-            onStartTest={() => setCurrentTab('test')}
+            onStartTest={() => handleSetTab('test')}
             onOpenChat={() => setIsFloatingChatOpen(true)}
-            onOpenGuide={() => setCurrentTab('guide')}
+            onOpenGuide={() => handleSetTab('guide')}
           />
         )}
 
         {currentTab === 'test' && (
-          testResult ? (
+          testResult && (testResult.studentName.toLowerCase() === (activeUser?.name || '').toLowerCase() || testResult.studentName.toLowerCase() === (activeUser?.username || '').toLowerCase()) ? (
             <AssessmentResultView
               result={testResult}
               onOpenChat={() => setIsFloatingChatOpen(true)}
-              onOpenGuide={() => setCurrentTab('guide')}
+              onOpenGuide={() => handleSetTab('guide')}
               onRetake={handleRetakeTest}
             />
           ) : (
@@ -66,6 +129,8 @@ export function App() {
         {currentTab === 'history' && <HistoryView />}
 
         {currentTab === 'about' && <AboutView />}
+
+        {currentTab === 'admin' && <AdminView />}
       </main>
 
       {/* PERSISTENT FLOATING ACTION BUTTON (FAB) FOR SI JEUMPA AI */}
@@ -92,14 +157,8 @@ export function App() {
 
       {/* FLOATING OVERLAY CHAT MODAL */}
       {isFloatingChatOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-xs animate-slide-up">
-          <div className="w-full max-w-lg">
-            <AICounselorModal onClose={() => setIsFloatingChatOpen(false)} />
-          </div>
-        </div>
+        <AICounselorModal onClose={() => setIsFloatingChatOpen(false)} />
       )}
     </div>
   );
 }
-
-export default App;

@@ -1,12 +1,13 @@
 <div align="center">
 
-<img src="public/assets/logo_rise_aceh.jpg" alt="TemanSulung Logo" width="120" height="120" style="border-radius: 50%;" />
+<img src="public/assets/logo_rise_aceh.jpg" alt="RISE App Logo" width="120" height="120" style="border-radius: 50%; shadow: 0 4px 12px rgba(0,0,0,0.1);" />
 
-# 🌸 TemanSulung
+# 🌸 RISE App
 
-### *Teman Pendamping Anak Sulung Perempuan*
+### *Resilience Intervention for Supporting Eldest*
+**Aplikasi Resiliensi Akademik & Kesehatan Emosional Siswi Anak Sulung Perempuan**
 
-> Aplikasi interaktif berbasis **Model RISE** (*Resilience Intervention for Supporting Eldest*) yang dikembangkan sebagai bagian dari proposal riset **OPSI SMAN Modal Bangsa Aceh** untuk mendampingi siswi anak sulung perempuan yang mengalami *Eldest Daughter Syndrome*.
+> Aplikasi interaktif berbasis **Model RISE** yang dikembangkan oleh Tim Peneliti OPSI **SMAN Modal Bangsa Aceh** (Siti Endah Dinara & Zalfa Zahiya) untuk mendampingi siswi anak sulung perempuan (*Eldest Daughter Syndrome*).
 
 ---
 
@@ -14,59 +15,57 @@
 [![React](https://img.shields.io/badge/React-18-61DAFB?style=for-the-badge&logo=react&logoColor=black)](https://reactjs.org/)
 [![Vite](https://img.shields.io/badge/Vite-6.4-646CFF?style=for-the-badge&logo=vite&logoColor=white)](https://vitejs.dev/)
 [![TailwindCSS](https://img.shields.io/badge/TailwindCSS-v4-38BDF8?style=for-the-badge&logo=tailwindcss&logoColor=white)](https://tailwindcss.com/)
-[![OpenRouter](https://img.shields.io/badge/AI-OpenRouter%20Gemini-FF6B6B?style=for-the-badge&logo=google&logoColor=white)](https://openrouter.ai/)
+[![Firebase](https://img.shields.io/badge/Firebase-Online%20DB-FFCA28?style=for-the-badge&logo=firebase&logoColor=black)](https://firebase.google.com/)
+[![OpenRouter](https://img.shields.io/badge/AI-Si%20Jeumpa%20Gemini-FF6B6B?style=for-the-badge&logo=google&logoColor=white)](https://openrouter.ai/)
 
 </div>
 
 ---
 
-## 📖 Tentang Aplikasi
+## 📖 Tentang Aplikasi RISE
 
-**TemanSulung** adalah aplikasi web edukatif & interaktif yang dirancang khusus untuk siswi anak sulung perempuan (*eldest daughter*) di SMAN Modal Bangsa Aceh. Aplikasi ini merupakan implementasi digital dari **Proposal Riset OPSI** (*Olimpiade Penelitian Siswa Indonesia*) yang menggabungkan:
+**RISE App** adalah platform interaktif dan intervensi psikoedukasi berbasis bukti yang dirancang khusus untuk membantu siswi anak sulung perempuan (*eldest daughter*) di **SMAN Modal Bangsa Aceh** dalam menyeimbangkan beban ganda rumah tangga dan prestasi belajar di sekolah.
 
-- 🧠 **Skrining Resiliensi Akademik** berbasis instrumen *Martin & Marsh (2006)*
-- 💬 **Konseling AI "Si Jeumpa"** yang responsif terhadap konteks *Eldest Daughter Syndrome*
-- 📚 **4 Modul Intervensi RISE** yang praktis dan berbasis bukti
-- 📌 **Papan Catatan Padlet** untuk merekam perjalanan emosional
+### 🔬 Landasan Model Riset OPSI SMAN Modal Bangsa
+- 📌 **Eldest Daughter Syndrome (EDS)**: *Time Strain* (kelelahan waktu), *Role Burden* (tuntutan perfeksionisme), dan *Role Guilt* (rasa bersalah saat istirahat).
+- 📌 **4 Dimensi Resiliensi Akademik (Martin & Marsh, 2006)**:
+  - 🌟 **Confidence** → Keyakinan Diri Akademik
+  - ⏱️ **Control** → Kendali Waktu & Tugas
+  - 🧘 **Composure** → Ketenangan Emosi & Stres
+  - 💪 **Commitment** → Ketekunan & Kegigihan
+- 📌 **4 Pilar Intervensi Model RISE**:
+  - **Modul 1**: Psikoedukasi Batasan Sehat (*Healthy Boundaries*)
+  - **Modul 2**: Regulasi Emosi CBT & Reframing Pikiran
+  - **Modul 3**: Dukungan BK & Peer Group
+  - **Modul 4**: Belajar Adaptif (Teknik Pomodoro 25m & Top 2 Priorities)
 
 ---
 
-## ✨ Fitur Unggulan
+## ✨ Fitur Unggulan Utama
 
 | Fitur | Deskripsi |
 |-------|-----------|
-| 🩺 **Cek Tes Resiliensi** | Skrining 8 pertanyaan berdasarkan 4 dimensi Martin & Marsh: Confidence, Control, Composure, Commitment |
-| 🤖 **Si Jeumpa AI** | Chatbot AI hangat berbasis Gemini Flash via OpenRouter, konteks OPSI SMAN Modal Bangsa |
-| 📚 **Modul RISE** | 4 pilar intervensi: Psikoedukasi, Regulasi Emosi CBT, Dukungan BK, Belajar Adaptif |
-| 📌 **Catatan Padlet** | Papan sticky note visual untuk histori tes & jurnal curhatan AI |
-| 👤 **Multi-Profil** | Sistem profil pengguna tanpa login — setiap profil punya histori tersendiri |
-| 💾 **Penyimpanan Lokal** | Semua data tersimpan privat di perangkat melalui `localStorage` |
-| 🌸 **Doodle Background** | Ornamen SVG Bungong Jeumpa khas Aceh yang estetik |
+| 🔒 **Sistem Autentikasi & PIN 6-Digit** | Login profil siswi menggunakan Username Unik & PIN 6-digit rahasia. Akses `Cek Tes` dikunci (*Strict Login Gate*) khusus untuk profil terdaftar. |
+| 🩺 **Skrining Resiliensi Akademik** | 8 soal evaluasi 4 dimensi resiliensi (skala 1-5) yang dimulai **kosong secara default** dengan *live progress counter* dan validasi pengiriman. |
+| 🤖 **Si Jeumpa AI (True Floating Widget)** | Asisten konseling AI hangat khas Aceh berbasis Gemini Flash via OpenRouter. Melayang adaptif di pojok kanan bawah pada semua tingkat zoom browser (100% - 200%). |
+| 🛡️ **Dashboard Admin BK & Peneliti** | Panel pemantauan 5-kolom ringkas (tanpa horizontal scroll), rekapitulasi statistik, serta fitur reset PIN profil siswi. |
+| 📊 **Ekspor Asli Excel (.xlsx)** | Download rekapitulasi data penelitian dalam format asli Microsoft Excel (`.xlsx`) lengkap dengan lebar kolom auto-fit dan penomoran urut otomatis. |
+| 📋 **Papan Catatan & Jurnal (Padlet View)** | Papan sticky note estetik untuk riwayat tes & reframing CBT Si Jeumpa. Mode Admin dapat memantau seluruh catatan siswi dengan fitur search. |
+| ☁️ **Online Database Sync (Firebase)** | Sinkronisasi data riwayat tes & profil secara real-time ke Firebase Firestore/Realtime DB dengan fallback *local storage*. |
+| 📱 **Desain Fixed Header & Responsive Zoom** | Navbar `fixed top-0` dengan *top-padding* `pt-32` serta auto smooth-scroll ke atas setiap pindah langkah/tab. |
 
 ---
 
-## 🔬 Landasan Ilmiah
+## 🔐 Kredensial Akses
 
-Aplikasi ini didasarkan pada:
+### 1. Akun Siswi (User)
+- Siswi dapat membuat profil baru langsung melalui menu lencana **`Login Profil Siswi`** di header kanan atas.
+- **Form Pendaftaran**: Nama Lengkap, Username Unik (cth: `dinara123`), Usia (14-19 tahun), dan PIN 6-Digit Rahasia (cth: `123456`).
 
-```
-📌 Eldest Daughter Syndrome (EDS)
-   └─ Time Strain (kelelahan waktu)
-   └─ Role Burden (tuntutan perfeksionisme)
-   └─ Role Guilt (rasa bersalah saat istirahat)
-
-📌 Model Resiliensi Akademik (Martin & Marsh, 2006)
-   ├─ Confidence   → Keyakinan Diri Akademik
-   ├─ Control      → Kendali Waktu & Tugas
-   ├─ Composure    → Ketenangan Emosi / Stres
-   └─ Commitment   → Ketekunan & Kegigihan
-
-📌 4 Pilar Intervensi Model RISE
-   ├─ Pilar 1: Psikoedukasi Batasan Sehat
-   ├─ Pilar 2: Regulasi Emosi CBT & Mindfulness
-   ├─ Pilar 3: Dukungan BK & Peer Group
-   └─ Pilar 4: Belajar Adaptif (Pomodoro & Top 2 Priorities)
-```
+### 2. Panel Admin (Konselor BK / Peneliti OPSI)
+- **Akses Login**: Klik **`Login Profil Siswi`** ➔ **`🔐 Mode Admin`**
+- **Email / Username**: `admin@gmail.com` atau `admin`
+- **Password Admin**: `sudahlupa`
 
 ---
 
@@ -75,47 +74,48 @@ Aplikasi ini didasarkan pada:
 - **Framework**: React 18 + TypeScript
 - **Bundler**: Vite 6
 - **Styling**: TailwindCSS v4 + Custom Vanilla CSS
-- **AI**: OpenRouter API → `google/gemini-2.5-flash`
-- **State/Storage**: React Hooks + Browser `localStorage`
-- **Icons**: Custom SVG Icon System (`CustomIcons.tsx`)
-- **Font**: Plus Jakarta Sans (Google Fonts)
+- **Icons**: Custom SVG Icon System (`CustomIcons.tsx` & `RiseLogoSvg.tsx`)
+- **Excel Generator**: `xlsx` (SheetJS)
+- **Online Database**: Firebase Online Realtime / Firestore DB
+- **AI Integration**: OpenRouter API (`google/gemini-2.5-flash`)
+- **Typography**: Plus Jakarta Sans & Outfit (Google Fonts)
 
 ---
 
-## 🚀 Cara Menjalankan Lokal
+## 🚀 Cara Menjalankan Aplikasi Secara Lokal
 
-### 1. Clone repository
+### 1. Clone Repository
 
 ```bash
 git clone https://github.com/faruqeclypst/TemanSulung.git
 cd TemanSulung
 ```
 
-### 2. Install dependencies
+### 2. Install Dependencies
 
 ```bash
 npm install
 ```
 
-### 3. Buat file `.env`
+### 3. Konfigurasi File Environment `.env`
 
-Buat file `.env` di root project dan tambahkan API key OpenRouter kamu:
+Buat file `.env` di root direktori proyek:
 
 ```env
-VITE_OPENROUTER_API_KEY=sk-or-v1-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+VITE_OPENROUTER_API_KEY=your_openrouter_api_key_here
+VITE_FIREBASE_API_KEY=your_firebase_api_key_here
+VITE_FIREBASE_PROJECT_ID=your_firebase_project_id_here
 ```
 
-> 🔑 Dapatkan API Key gratis di [https://openrouter.ai](https://openrouter.ai)
-
-### 4. Jalankan dev server
+### 4. Jalankan Server Dev
 
 ```bash
 npm run dev
 ```
 
-Buka browser di `http://localhost:5173`
+Aplikasi akan berjalan di `http://localhost:5173`.
 
-### 5. Build produksi
+### 5. Build untuk Produksi
 
 ```bash
 npm run build
@@ -123,84 +123,16 @@ npm run build
 
 ---
 
-## 📁 Struktur Proyek
+## 👥 Tim Peneliti & Pengembang OPSI
 
-```
-TemanSulung/
-├── public/
-│   └── assets/              # Gambar mascot, logo, hero
-├── src/
-│   ├── components/
-│   │   ├── Navbar.tsx        # Navigasi + badge profil
-│   │   ├── LandingPage.tsx   # Halaman beranda
-│   │   ├── AssessmentForm.tsx     # Form tes 3 langkah
-│   │   ├── AssessmentResult.tsx   # Hasil & analisis tes
-│   │   ├── AICounselorModal.tsx   # Chat Si Jeumpa AI
-│   │   ├── RiseModules.tsx        # 4 modul intervensi
-│   │   ├── HistoryView.tsx        # Papan Padlet catatan
-│   │   ├── AboutView.tsx          # Halaman tentang
-│   │   ├── UserProfileBar.tsx     # Switcher profil
-│   │   ├── BackgroundDoodles.tsx  # Ornamen SVG doodle
-│   │   ├── CustomIcons.tsx        # SVG icon system
-│   │   └── RiseLogoSvg.tsx        # Logo SVG aplikasi
-│   ├── services/
-│   │   ├── aiCounselor.ts    # OpenRouter API integration
-│   │   └── storage.ts        # localStorage management
-│   ├── types/
-│   │   └── index.ts           # TypeScript interfaces
-│   ├── App.tsx                # Root component + FAB
-│   ├── main.tsx               # Entry point
-│   └── index.css              # Global styles + doodle BG
-├── .env                       # API key (JANGAN di-commit!)
-├── .gitignore
-├── index.html
-├── package.json
-├── tsconfig.json
-└── vite.config.ts
-```
-
----
-
-## 👩‍🔬 Tim Peneliti & Pengembang
-
-<table>
-  <tr>
-    <td align="center">
-      <strong>Siti Endah Dinara</strong><br/>
-      <sub>Tim Peneliti OPSI</sub><br/>
-      <sub>SMAN Modal Bangsa Aceh</sub>
-    </td>
-    <td align="center">
-      <strong>Zalfa Zahiya</strong><br/>
-      <sub>Tim Peneliti OPSI</sub><br/>
-      <sub>SMAN Modal Bangsa Aceh</sub>
-    </td>
-  </tr>
-</table>
-
-**Pembimbing Penelitian & Aplikasi**
-> 🏫 SMAN Modal Bangsa Aceh — *Olimpiade Penelitian Siswa Indonesia (OPSI)*
-
----
-
-## 🌺 Maskot: Si Jeumpa
-
-**Si Jeumpa** adalah maskot AI TemanSulung — siswi berhijab yang hangat dan ramah, terinspirasi dari bunga *Bungong Jeumpa* khas Aceh yang melambangkan keindahan, ketahanan, dan keharuman identitas lokal Aceh.
-
-Si Jeumpa menjawab curhatan pengguna menggunakan kerangka pengetahuan **OPSI SMAN Modal Bangsa** untuk memberikan saran yang tepat, hangat, dan berbasis bukti ilmiah.
-
----
-
-## 📜 Lisensi
-
-Proyek ini dikembangkan untuk keperluan **OPSI (Olimpiade Penelitian Siswa Indonesia)** SMAN Modal Bangsa Aceh.
+**SMAN Modal Bangsa Aceh**
+- **Siti Endah Dinara** (*Tim Peneliti OPSI SMAN Modal Bangsa*)
+- **Zalfa Zahiya** (*Tim Peneliti OPSI SMAN Modal Bangsa*)
 
 ---
 
 <div align="center">
 
-🌸 *"Kamu sudah berjuang luar biasa mengurus rumah sambil sekolah. Yuk kita jaga kesehatan mentalmu bersama Si Jeumpa!"* 🌸
-
-**TemanSulung** — *Resiliensi untuk Anak Sulung Perempuan Indonesia*
+*Dikembangkan dengan 🌸 dan kepedulian untuk kesehatan emosional siswi Indonesia.*
 
 </div>

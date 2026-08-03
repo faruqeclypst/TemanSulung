@@ -13,7 +13,7 @@ export const AboutView: React.FC = () => {
         <div className="flex flex-col items-center justify-center pt-2 gap-2">
           <RiseLogoSvg size={160} />
           <div className="text-2xl font-black tracking-tight text-slate-900 pt-1">
-            Teman<span className="text-rose-500 font-black">Sulung</span>
+            RISE<span className="text-rose-500 font-black"> App</span>
           </div>
         </div>
 
@@ -23,11 +23,11 @@ export const AboutView: React.FC = () => {
           </span>
 
           <h1 className="text-2xl sm:text-3xl font-black text-slate-900 pt-1">
-            Tentang Aplikasi TemanSulung
+            Tentang Aplikasi RISE
           </h1>
 
           <p className="text-xs sm:text-sm text-slate-600 font-medium leading-relaxed max-w-md mx-auto">
-            Aplikasi interaktif <strong>TemanSulung (Model RISE: Resilience Intervention for Supporting Eldest)</strong> dikembangkan khusus untuk mendukung resiliensi akademik dan kesehatan emosional siswi anak sulung perempuan (<em>Eldest Daughter Syndrome</em>).
+            Aplikasi interaktif <strong>RISE (Resilience Intervention for Supporting Eldest)</strong> dikembangkan khusus untuk mendukung resiliensi akademik dan kesehatan emosional siswi anak sulung perempuan (<em>Eldest Daughter Syndrome</em>).
           </p>
         </div>
       </div>
@@ -118,7 +118,7 @@ export const AboutView: React.FC = () => {
       <div className="bg-white p-6 rounded-3xl border border-rose-100 shadow-xs space-y-3">
         <h2 className="text-xs font-black uppercase tracking-wider text-slate-900 flex items-center gap-2">
           <IconHeart className="w-4 h-4 text-rose-500 fill-rose-500" />
-          Tujuan Utama Aplikasi TemanSulung:
+          Tujuan Utama Aplikasi RISE:
         </h2>
 
         <ul className="space-y-2 text-xs text-slate-700 font-medium">
@@ -132,14 +132,14 @@ export const AboutView: React.FC = () => {
           </li>
           <li className="flex items-start gap-2 bg-rose-50/50 p-3 rounded-2xl border border-rose-100">
             <IconCheckCircle className="w-4 h-4 text-rose-500 flex-shrink-0 mt-0.5" />
-            <span>Menyediakan akses konseling AI ramah anak &amp; fitur penyimpanan catatan privat tanpa perlu login.</span>
+            <span>Menyediakan akses konseling AI ramah anak &amp; penyimpan profil &amp; data online terintegrasi.</span>
           </li>
         </ul>
       </div>
 
       {/* Copyright Footer */}
       <div className="text-center text-xs text-slate-400 font-medium py-2">
-        © 2026 Aplikasi TemanSulung • Riset OPSI Model RISE
+        © 2026 Aplikasi RISE • Riset OPSI SMAN Modal Bangsa
       </div>
     </div>
   );

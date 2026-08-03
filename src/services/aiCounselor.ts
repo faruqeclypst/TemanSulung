@@ -7,7 +7,7 @@ export interface SimpleAIResponse {
 const OPENROUTER_API_KEY = import.meta.env.VITE_OPENROUTER_API_KEY as string;
 
 export async function getTemanCurhatResponse(userQuery: string): Promise<SimpleAIResponse> {
-  const SYSTEM_PROMPT = `Kamu adalah "Si Jeumpa", maskot AI pendamping resmi aplikasi TemanSulung berdasarkan proposal riset OPSI SMAN Modal Bangsa Aceh (Model RISE: Resilience Intervention for Supporting Eldest).
+  const SYSTEM_PROMPT = `Kamu adalah "Si Jeumpa", maskot AI pendamping resmi aplikasi RISE (Resilience Intervention for Supporting Eldest) riset OPSI SMAN Modal Bangsa Aceh.
 
 KERANGKA PENGETAHUAN UTAMA (WAJIB DIPEGANG DALAM MENJAWAB):
 1. Eldest Daughter Syndrome (EDS): Kondisi psikososial siswi anak sulung perempuan yang memegang beban ganda rumah tangga (mengasuh adik, memasak, menyapu >3 jam/hari) sekaligus dituntut berprestasi di sekolah. Pahami 3 masalah utamanya: Time Strain (kelelahan waktu), Role Burden (tuntutan perfeksionis jadi contoh), dan Role Guilt (rasa bersalah saat beristirahat).
@@ -30,7 +30,7 @@ FORMAT JAWABAN (WAJIB SANGAT HANGAT, BAHASA REMAJA SANTUN, DAN MEMATUHI 3 POIN B
         'Content-Type': 'application/json',
         Authorization: `Bearer ${OPENROUTER_API_KEY}`,
         'HTTP-Referer': 'http://localhost:5173/',
-        'X-Title': 'TemanSulung SMAN Modal Bangsa',
+        'X-Title': 'RISE App SMAN Modal Bangsa',
       },
       body: JSON.stringify({
         model: 'google/gemini-2.5-flash',
@@ -102,8 +102,8 @@ function getOfflineFallbackResponse(userQuery: string): SimpleAIResponse {
   }
 
   return {
-    pesanHangat: 'Halo Kakak Sulung 🌸! Si Jeumpa selalu siap mendampingimu di aplikasi TemanSulung.',
+    pesanHangat: 'Halo Kakak Sulung 🌸! Si Jeumpa selalu siap mendampingimu di aplikasi RISE.',
     saranPraktis: 'Sesuai Pilar 4 RISE: Terapkan belajar mikro 25 menit (Pomodoro) dan pilih 2 tugas prioritas utama harianmu (Top 2 Priorities).',
-    kataSemangat: 'Kamu tidak sendirian, Si Jeumpa dan kawan-kawan di TemanSulung selalu ada bersamamu! 💕',
+    kataSemangat: 'Kamu tidak sendirian, Si Jeumpa dan kawan-kawan di RISE selalu ada bersamamu! 💕',
   };
 }

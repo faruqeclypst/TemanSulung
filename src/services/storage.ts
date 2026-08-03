@@ -1,12 +1,13 @@
 import { SimpleResult, CBTJournalEntry, ModuleProgress, UserProfile } from '../types';
+import { onlineDb } from './onlineDb';
 
 const STORAGE_KEYS = {
   RESULTS: 'rise_simple_results',
   JOURNALS: 'rise_simple_journals',
   MODULE_PROGRESS: 'rise_simple_module_progress',
-  PROFILES: 'temansulung_user_profiles',
-  ACTIVE_USER: 'temansulung_active_user',
-  CHAT_MESSAGES_PREFIX: 'temansulung_chat_messages_',
+  PROFILES: 'rise_user_profiles',
+  ACTIVE_USER: 'rise_active_user',
+  CHAT_MESSAGES_PREFIX: 'rise_chat_messages_',
 };
 
 export interface ChatMessage {
@@ -14,6 +15,59 @@ export interface ChatMessage {
   sender: 'ai' | 'user';
   text: string;
 }
+
+// Background sync on load
+export const syncWithOnlineDb = async (): Promise<void> => {
+  try {
+    const isOnline = await onlineDb.checkConnection();
+    if (!isOnline) return;
+
+    // Sync profiles
+    const remoteProfiles = await onlineDb.fetchProfiles();
+    const localProfiles = getUserProfiles();
+    
+    // Merge unique profiles by id or name
+    const mergedProfiles = [...remoteProfiles];
+    for (const localP of localProfiles) {
+      if (!mergedProfiles.some(p => p.id === localP.id || p.name.toLowerCase() === localP.name.toLowerCase())) {
+        mergedProfiles.push(localP);
+        // Upload local profile to online DB
+        await onlineDb.saveProfile(localP);
+      }
+    }
+    localStorage.setItem(STORAGE_KEYS.PROFILES, JSON.stringify(mergedProfiles));
+
+    // Sync results
+    const remoteResults = await onlineDb.fetchResults();
+    const localResults = getSavedResults();
+    const mergedResults = [...remoteResults];
+    for (const localR of localResults) {
+      if (!mergedResults.some(r => r.date === localR.date && r.studentName.toLowerCase() === localR.studentName.toLowerCase())) {
+        mergedResults.push(localR);
+        await onlineDb.saveResult(localR);
+      }
+    }
+    localStorage.setItem(STORAGE_KEYS.RESULTS, JSON.stringify(mergedResults));
+
+    // Sync journals
+    const remoteJournals = await onlineDb.fetchJournals();
+    const localJournals = getSavedJournals();
+    const mergedJournals = [...remoteJournals];
+    for (const localJ of localJournals) {
+      if (!mergedJournals.some(j => j.id === localJ.id)) {
+        mergedJournals.push(localJ);
+        await onlineDb.saveJournal(localJ);
+      }
+    }
+    localStorage.setItem(STORAGE_KEYS.JOURNALS, JSON.stringify(mergedJournals));
+
+  } catch (err) {
+    console.warn('Sync with online database skipped:', err);
+  }
+};
+
+// Fire sync asynchronously
+syncWithOnlineDb();
 
 // --- PROFILES MANAGEMENT ---
 export const getUserProfiles = (): UserProfile[] => {
@@ -46,28 +100,65 @@ export const setActiveUserProfile = (profile: UserProfile | null): void => {
   }
 };
 
-export const saveUserProfile = (name: string, age: number): UserProfile => {
+export const saveUserProfile = (name: string, age: number, pin?: string, username?: string): UserProfile => {
   const current = getUserProfiles();
-  const existing = current.find((p) => p.name.toLowerCase() === name.toLowerCase());
+  const cleanName = name.trim();
+  const cleanUsername = (username || cleanName).toLowerCase().replace(/\s+/g, '_');
+
+  const existing = current.find((p) =>
+    (p.username && p.username.toLowerCase() === cleanUsername) ||
+    p.name.toLowerCase() === cleanName.toLowerCase()
+  );
+
+  let updatedProfile: UserProfile;
+  let updatedList: UserProfile[];
+
+  const pinToUse = pin || existing?.pin || '1234';
 
   if (existing) {
-    const updatedProfile = { ...existing, age };
-    const updatedList = current.map((p) => (p.id === existing.id ? updatedProfile : p));
-    localStorage.setItem(STORAGE_KEYS.PROFILES, JSON.stringify(updatedList));
-    setActiveUserProfile(updatedProfile);
-    return updatedProfile;
+    updatedProfile = { ...existing, name: cleanName, username: cleanUsername, age, pin: pinToUse };
+    updatedList = current.map((p) => (p.id === existing.id ? updatedProfile : p));
+  } else {
+    updatedProfile = {
+      id: `usr_${Date.now()}`,
+      name: cleanName,
+      username: cleanUsername,
+      age,
+      pin: pinToUse,
+    };
+    updatedList = [updatedProfile, ...current];
   }
 
-  const newProfile: UserProfile = {
-    id: `usr_${Date.now()}`,
-    name,
-    age,
-  };
-
-  const updatedList = [newProfile, ...current];
   localStorage.setItem(STORAGE_KEYS.PROFILES, JSON.stringify(updatedList));
-  setActiveUserProfile(newProfile);
-  return newProfile;
+  setActiveUserProfile(updatedProfile);
+
+  // Async push to Online Database (Firebase)
+  onlineDb.saveProfile(updatedProfile).catch(err => console.warn('Failed async profile save to online DB', err));
+
+  return updatedProfile;
+};
+
+export const resetStudentPin = async (profileId: string, newPin: string): Promise<UserProfile[]> => {
+  const current = getUserProfiles();
+  const existing = current.find((p) => p.id === profileId);
+  if (!existing) return current;
+
+  const updatedProfile = { ...existing, pin: newPin };
+  const updatedList = current.map((p) => (p.id === profileId ? updatedProfile : p));
+
+  localStorage.setItem(STORAGE_KEYS.PROFILES, JSON.stringify(updatedList));
+  const active = getActiveUserProfile();
+  if (active && active.id === profileId) {
+    setActiveUserProfile(updatedProfile);
+  }
+
+  await onlineDb.saveProfile(updatedProfile);
+  return updatedList;
+};
+
+export const fetchOnlineProfilesList = async (): Promise<UserProfile[]> => {
+  await syncWithOnlineDb();
+  return getUserProfiles();
 };
 
 export const deleteUserProfile = (profileId: string): UserProfile[] => {
@@ -83,10 +174,12 @@ export const deleteUserProfile = (profileId: string): UserProfile[] => {
     setActiveUserProfile(nextActive);
   }
 
-  // Also clean up stored chat messages for that deleted profile
+  // Clean up stored chat messages for deleted profile
   if (profileToDelete) {
     const chatKey = `${STORAGE_KEYS.CHAT_MESSAGES_PREFIX}${profileToDelete.name.toLowerCase()}`;
     localStorage.removeItem(chatKey);
+    // Delete from online DB
+    onlineDb.deleteProfile(profileId).catch(err => console.warn('Failed async profile delete online', err));
   }
 
   return updatedList;
@@ -115,6 +208,10 @@ export const saveSimpleResult = (res: SimpleResult): SimpleResult[] => {
   const current = getSavedResults();
   const updated = [res, ...current];
   localStorage.setItem(STORAGE_KEYS.RESULTS, JSON.stringify(updated));
+
+  // Async push to Online Database (Firebase)
+  onlineDb.saveResult(res).catch(err => console.warn('Failed async result save to online DB', err));
+
   return updated;
 };
 
@@ -144,6 +241,10 @@ export const saveJournalEntry = (entry: CBTJournalEntry): CBTJournalEntry[] => {
   const current = getSavedJournals();
   const updated = [entryWithUser, ...current];
   localStorage.setItem(STORAGE_KEYS.JOURNALS, JSON.stringify(updated));
+
+  // Async push to Online Database (Firebase)
+  onlineDb.saveJournal(entryWithUser).catch(err => console.warn('Failed async journal save online', err));
+
   return updated;
 };
 
@@ -163,6 +264,12 @@ export const updateModuleProgress = (partial: Partial<ModuleProgress>): ModulePr
   const current = getModuleProgress();
   const updated = { ...current, ...partial };
   localStorage.setItem(STORAGE_KEYS.MODULE_PROGRESS, JSON.stringify(updated));
+
+  const activeUser = getActiveUserProfile();
+  if (activeUser) {
+    onlineDb.saveModuleProgress(activeUser.id, updated).catch(err => console.warn('Failed async module progress online', err));
+  }
+
   return updated;
 };
 
@@ -182,8 +289,8 @@ export const getSavedChatMessages = (profileName?: string): ChatMessage[] => {
   }
 
   const welcomeText = activeUser
-    ? `Peue haba ${activeUser.name} Kakak Sulung 🌸! Aku Si Jeumpa, maskot pendampingmu di TemanSulung. Ada hal yang ingin kamu curhatkan hari ini?`
-    : 'Peue haba Kakak Sulung 🌸! Aku Si Jeumpa, maskot pendampingmu di TemanSulung. Ada hal yang ingin kamu curhatkan hari ini?';
+    ? `Peue haba ${activeUser.name} Kakak Sulung 🌸! Aku Si Jeumpa, maskot pendampingmu di aplikasi RISE. Ada hal yang ingin kamu curhatkan hari ini?`
+    : 'Peue haba Kakak Sulung 🌸! Aku Si Jeumpa, maskot pendampingmu di aplikasi RISE. Ada hal yang ingin kamu curhatkan hari ini?';
 
   return [
     {
@@ -205,4 +312,17 @@ export const saveChatMessages = (msgs: ChatMessage[], profileName?: string): Cha
     console.warn(e);
   }
   return msgs;
+};
+
+export const clearAllStorageData = async (): Promise<void> => {
+  localStorage.removeItem(STORAGE_KEYS.RESULTS);
+  localStorage.removeItem(STORAGE_KEYS.JOURNALS);
+  localStorage.removeItem(STORAGE_KEYS.MODULE_PROGRESS);
+  localStorage.removeItem(STORAGE_KEYS.PROFILES);
+  localStorage.removeItem(STORAGE_KEYS.ACTIVE_USER);
+  localStorage.removeItem('temansulung_user_profiles');
+  localStorage.removeItem('temansulung_active_user');
+  localStorage.removeItem('temansulung_simple_results');
+
+  await onlineDb.clearAllData();
 };

@@ -1,13 +1,16 @@
 export interface UserProfile {
   id: string;
-  name: string;
+  name: string; // Nama Lengkap Siswi
+  username?: string; // Username / NISN Unik Siswi
   age: number;
+  pin?: string; // 4-digit PIN
 }
 
 export interface SimpleResult {
   id: string;
   date: string;
   studentName: string;
+  studentUsername?: string;
   studentAge: number;
   domesticHours: number;
   siblingCount: number;

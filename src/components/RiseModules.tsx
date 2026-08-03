@@ -21,6 +21,15 @@ export const RiseModulesView: React.FC = () => {
   const [activeTab, setActiveTab] = useState<1 | 2 | 3 | 4>(1);
   const [progress, setProgress] = useState<ModuleProgress>(getModuleProgress());
 
+  useEffect(() => {
+    const sync = () => {
+      setProgress(getModuleProgress());
+    };
+    sync();
+    const interval = setInterval(sync, 500);
+    return () => clearInterval(interval);
+  }, []);
+
   // --- Functional Timer State ---
   const [selectedMinutes, setSelectedMinutes] = useState<number>(25);
   const [timeLeft, setTimeLeft] = useState<number>(25 * 60);
@@ -121,7 +130,10 @@ export const RiseModulesView: React.FC = () => {
           return (
             <button
               key={tab.id}
-              onClick={() => setActiveTab(tab.id as any)}
+              onClick={() => {
+                setActiveTab(tab.id as any);
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+              }}
               className={`py-2.5 px-2 rounded-xl text-xs font-bold transition-all flex flex-col items-center justify-center gap-0.5 ${
                 isActive
                   ? 'bg-gradient-to-r from-rose-500 to-purple-600 text-white shadow-xs'
