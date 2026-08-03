@@ -11,6 +11,7 @@
 
 ---
 
+[![OPSI](https://img.shields.io/badge/OPSI-100%25%20PDF%20Compliant-FF4081?style=for-the-badge&logo=google-docs&logoColor=white)](https://sman-modalbangsa.sch.id)
 [![TypeScript](https://img.shields.io/badge/TypeScript-98%25-3178c6?style=for-the-badge&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 [![React](https://img.shields.io/badge/React-18-61DAFB?style=for-the-badge&logo=react&logoColor=black)](https://reactjs.org/)
 [![Vite](https://img.shields.io/badge/Vite-6.4-646CFF?style=for-the-badge&logo=vite&logoColor=white)](https://vitejs.dev/)
@@ -22,21 +23,23 @@
 
 ---
 
-## 📖 Tentang Aplikasi RISE
+## 📄 100% Keselarasan dengan PDF Proposal Riset OPSI
 
-**RISE App** adalah platform interaktif dan intervensi psikoedukasi berbasis bukti yang dirancang khusus untuk membantu siswi anak sulung perempuan (*eldest daughter*) di **SMAN Modal Bangsa Aceh** dalam menyeimbangkan beban ganda rumah tangga dan prestasi belajar di sekolah.
+Seluruh struktur instrumen, teori resiliensi, indikator kelelahan, dan modul intervensi pada **RISE App** dirancang **100% presisi dan terintegrasi penuh** sesuai dengan dokumen PDF Proposal Riset OPSI (*Olimpiade Penelitian Siswa Indonesia*) SMAN Modal Bangsa Aceh:
 
-### 🔬 Landasan Model Riset OPSI SMAN Modal Bangsa
-- 📌 **Eldest Daughter Syndrome (EDS)**: *Time Strain* (kelelahan waktu), *Role Burden* (tuntutan perfeksionisme), dan *Role Guilt* (rasa bersalah saat istirahat).
+- 📌 **3 Indikator Utama Eldest Daughter Syndrome (EDS)**:
+  - ⏱️ **Time Strain**: Kelelahan alokasi waktu belajar akibat jam membantu rumah tangga (&gt;3 jam/hari).
+  - ⚖️ **Role Burden**: Tuntutan menjadi contoh perfeksionis tanpa cela bagi adik-adik di rumah.
+  - 😔 **Role Guilt**: Rasa bersalah saat menggunakan waktu pribadi untuk istirahat atau fokus belajar.
 - 📌 **4 Dimensi Resiliensi Akademik (Martin & Marsh, 2006)**:
-  - 🌟 **Confidence** → Keyakinan Diri Akademik
-  - ⏱️ **Control** → Kendali Waktu & Tugas
-  - 🧘 **Composure** → Ketenangan Emosi & Stres
-  - 💪 **Commitment** → Ketekunan & Kegigihan
-- 📌 **4 Pilar Intervensi Model RISE**:
+  - 🌟 **Confidence** → Keyakinan Diri Akademik (Soal 1 & 2)
+  - ⏱️ **Control** → Kendali Waktu & Tugas (Soal 3 & 4)
+  - 🧘 **Composure** → Ketenangan Emosi & Stres (Soal 5 & 6)
+  - 💪 **Commitment** → Ketekunan & Kegigihan (Soal 7 & 8)
+- 📌 **4 Pilar Modul Intervensi RISE**:
   - **Modul 1**: Psikoedukasi Batasan Sehat (*Healthy Boundaries*)
-  - **Modul 2**: Regulasi Emosi CBT & Reframing Pikiran
-  - **Modul 3**: Dukungan BK & Peer Group
+  - **Modul 2**: Regulasi Emosi CBT (*Cognitive Behavioral Therapy*) & Reframing Pikiran
+  - **Modul 3**: Pendampingan Guru BK SMAN Modal Bangsa & Peer Support Group
   - **Modul 4**: Belajar Adaptif (Teknik Pomodoro 25m & Top 2 Priorities)
 
 ---
@@ -103,6 +106,7 @@ Buat file `.env` di root direktori proyek:
 
 ```env
 VITE_OPENROUTER_API_KEY=your_openrouter_api_key_here
+VITE_FIREBASE_DATABASE_URL=your_firebase_database_url_here
 VITE_FIREBASE_API_KEY=your_firebase_api_key_here
 VITE_FIREBASE_PROJECT_ID=your_firebase_project_id_here
 ```
@@ -123,11 +127,13 @@ npm run build
 
 ---
 
-## 👥 Tim Peneliti & Pengembang OPSI
+## 👥 Tim Peneliti & Pembimbing OPSI
 
 **SMAN Modal Bangsa Aceh**
 - **Siti Endah Dinara** (*Tim Peneliti OPSI SMAN Modal Bangsa*)
 - **Zalfa Zahiya** (*Tim Peneliti OPSI SMAN Modal Bangsa*)
+- **Eva Susanti, S.Ag., M.M** (*Pembimbing Penelitian OPSI SMAN Modal Bangsa*)
+- **Alfaruq Asri, S.Pd. Gr** (*Pembimbing Aplikasi Web*)
 
 ---
 
