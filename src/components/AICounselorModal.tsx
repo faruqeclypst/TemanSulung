@@ -1,119 +1,231 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { IconSend, IconRefreshCw, IconUser, IconRotateCcw } from './CustomIcons';
-import { getTemanCurhatResponse, SimpleAIResponse } from '../services/aiCounselor';
 import { 
-  saveJournalEntry, 
-  getSavedChatMessages, 
-  saveChatMessages, 
-  ChatMessage, 
-  getActiveUserProfile 
-} from '../services/storage';
+  IconChat, 
+  IconSend, 
+  IconSparkles, 
+  IconUser, 
+  IconRotateCcw, 
+  IconRefreshCw 
+} from './CustomIcons';
+import { getAICounselorResponse } from '../services/aiCounselor';
+import { getActiveUserProfile, getSavedJournals, saveJournalEntry } from '../services/storage';
 import { UserProfile } from '../types';
+
+interface Message {
+  id: string;
+  sender: 'user' | 'ai';
+  text: string;
+  timestamp: string;
+}
 
 interface AICounselorModalProps {
   onClose?: () => void;
 }
 
+// Custom Markdown Formatter for AI Counselor Messages (No raw asterisks **, proper lists & bold text)
+const parseInlineFormatting = (text: string, isUserMessage: boolean) => {
+  const parts = text.split(/(\*\*.*?\*\*)/g);
+
+  return parts.map((part, idx) => {
+    if (part.startsWith('**') && part.endsWith('**')) {
+      const boldText = part.slice(2, -2);
+      return (
+        <strong 
+          key={idx} 
+          className={
+            isUserMessage
+              ? 'font-black underline decoration-white/50'
+              : 'font-black text-slate-900 bg-rose-50/90 px-1 py-0.5 rounded border border-rose-200/70'
+          }
+        >
+          {boldText}
+        </strong>
+      );
+    }
+    return part;
+  });
+};
+
+const renderFormattedText = (content: string, isUserMessage: boolean) => {
+  if (!content) return null;
+
+  // Split content into paragraphs
+  const paragraphs = content.split(/\n\n+/);
+
+  return (
+    <div className="space-y-2">
+      {paragraphs.map((para, pIdx) => {
+        const lines = para.split('\n');
+
+        // Check if all non-empty lines in paragraph are list items
+        const isList = lines.filter((l) => l.trim()).length > 0 && lines.every((line) => {
+          const trimmed = line.trim();
+          return (
+            !trimmed ||
+            trimmed.startsWith('- ') ||
+            trimmed.startsWith('* ') ||
+            /^\d+[\.\)]\s/.test(trimmed)
+          );
+        });
+
+        if (isList) {
+          return (
+            <ul key={pIdx} className="space-y-1.5 my-1.5 pl-0.5">
+              {lines.map((line, lIdx) => {
+                const trimmed = line.trim();
+                if (!trimmed) return null;
+
+                const cleanLine = trimmed
+                  .replace(/^[-*]\s+/, '')
+                  .replace(/^\d+[\.\)]\s+/, '');
+
+                return (
+                  <li key={lIdx} className="flex items-start gap-2 text-xs leading-relaxed">
+                    <span 
+                      className={`w-1.5 h-1.5 rounded-full flex-shrink-0 mt-1.5 ${
+                        isUserMessage ? 'bg-white' : 'bg-rose-500'
+                      }`}
+                    ></span>
+                    <span className="flex-1">{parseInlineFormatting(cleanLine, isUserMessage)}</span>
+                  </li>
+                );
+              })}
+            </ul>
+          );
+        }
+
+        return (
+          <p key={pIdx} className="leading-relaxed">
+            {lines.map((line, lIdx) => (
+              <React.Fragment key={lIdx}>
+                {lIdx > 0 && <br />}
+                {parseInlineFormatting(line, isUserMessage)}
+              </React.Fragment>
+            ))}
+          </p>
+        );
+      })}
+    </div>
+  );
+};
+
 export const AICounselorModal: React.FC<AICounselorModalProps> = ({ onClose }) => {
   const [activeUser, setActiveUser] = useState<UserProfile | null>(() => getActiveUserProfile());
-  const [messages, setMessages] = useState<ChatMessage[]>(() => getSavedChatMessages());
-  const [input, setInput] = useState<string>('');
+  const [messages, setMessages] = useState<Message[]>(() => [
+    {
+      id: 'welcome',
+      sender: 'ai',
+      text: `Peue haba, Sahabat Jeumpa! 👋 Saya Si Jeumpa, teman curhat setia siswi anak sulung SMAN Modal Bangsa Aceh. Apa yang sedang membebani pikiran atau membuatmu lelah hari ini? Ceritakan saja, Si Jeumpa siap mendengarkan tanpa menghakimi. 🌸`,
+      timestamp: new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }),
+    },
+  ]);
+
+  const [inputMessage, setInputMessage] = useState<string>('');
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  // Sync active user session
+  useEffect(() => {
+    const syncUser = () => {
+      setActiveUser(getActiveUserProfile());
+    };
+    syncUser();
+    window.addEventListener('storage', syncUser);
+    return () => window.removeEventListener('storage', syncUser);
+  }, []);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
   useEffect(() => {
-    const sync = () => {
-      const u = getActiveUserProfile();
-      setActiveUser(u);
-    };
-    sync();
-    const interval = setInterval(sync, 400);
-    return () => clearInterval(interval);
-  }, []);
-
-  useEffect(() => {
-    setMessages(getSavedChatMessages());
-  }, [activeUser?.id]);
-
-  useEffect(() => {
     scrollToBottom();
-  }, [messages]);
+  }, [messages, isLoading]);
 
-  const handleSend = async (textToSend?: string) => {
-    const query = textToSend || input;
-    if (!query.trim()) return;
+  const handleSendMessage = async (textToSend?: string) => {
+    const text = textToSend || inputMessage;
+    if (!text.trim() || isLoading) return;
 
-    const userMsg: ChatMessage = {
-      id: `usr_${Date.now()}`,
+    const userMsg: Message = {
+      id: Date.now().toString(),
       sender: 'user',
-      text: query,
+      text: text.trim(),
+      timestamp: new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }),
     };
 
-    const updatedWithUser = [...messages, userMsg];
-    setMessages(updatedWithUser);
-    saveChatMessages(updatedWithUser);
-    if (!textToSend) setInput('');
+    setMessages((prev) => [...prev, userMsg]);
+    if (!textToSend) setInputMessage('');
     setIsLoading(true);
 
     try {
-      const res: SimpleAIResponse = await getTemanCurhatResponse(query);
-      const aiMsg: ChatMessage = {
-        id: `ai_${Date.now()}`,
+      // Build conversation history for API
+      const history = messages
+        .filter((m) => m.id !== 'welcome')
+        .map((m) => ({
+          role: m.sender === 'user' ? ('user' as const) : ('model' as const),
+          parts: [{ text: m.text }],
+        }));
+
+      const aiReplyText = await getAICounselorResponse(text.trim(), history);
+
+      const aiMsg: Message = {
+        id: (Date.now() + 1).toString(),
         sender: 'ai',
-        text: `${res.pesanHangat}\n\n💡 Tips dari Si Jeumpa: ${res.saranPraktis}\n\n✨ ${res.kataSemangat}`,
+        text: aiReplyText,
+        timestamp: new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }),
       };
 
-      const updatedWithAI = [...updatedWithUser, aiMsg];
-      setMessages(updatedWithAI);
-      saveChatMessages(updatedWithAI);
+      setMessages((prev) => [...prev, aiMsg]);
 
+      // Save journal entry automatically to CBT Journal padlet
       saveJournalEntry({
-        id: `jrn_${Date.now()}`,
+        id: Date.now().toString(),
         date: new Date().toISOString(),
-        studentName: activeUser ? activeUser.name : 'Penguji',
-        curhatan: query,
-        saranPositif: res.pesanHangat,
+        studentName: activeUser?.name || 'Siswi',
+        curhatan: text.trim(),
+        saranPositif: aiReplyText,
       });
-    } catch (err) {
-      console.error(err);
+    } catch (error) {
+      console.error('Error sending AI counselor message:', error);
+      const errorMsg: Message = {
+        id: (Date.now() + 1).toString(),
+        sender: 'ai',
+        text: 'Maaf Sahabat Jeumpa, koneksi Si Jeumpa sedang terganggu sejenak. Tetap semangat dan coba kirim pesanmu sekali lagi ya! 🌸',
+        timestamp: new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }),
+      };
+      setMessages((prev) => [...prev, errorMsg]);
     } finally {
       setIsLoading(false);
     }
   };
 
   const handleClearChat = () => {
-    const initialMsgs: ChatMessage[] = [
+    setMessages([
       {
-        id: 'msg_welcome',
+        id: 'welcome',
         sender: 'ai',
-        text: activeUser
-          ? `Peue haba ${activeUser.name} Kakak Sulung 🌸! Aku Si Jeumpa, maskot pendampingmu di TemanSulung. Ada hal yang ingin kamu curhatkan hari ini?`
-          : 'Peue haba Kakak Sulung 🌸! Aku Si Jeumpa, maskot pendampingmu di TemanSulung. Ada hal yang ingin kamu curhatkan hari ini?',
+        text: `Peue haba, Sahabat Jeumpa! 👋 Saya Si Jeumpa, teman curhat setia siswi anak sulung SMAN Modal Bangsa Aceh. Apa yang sedang membebani pikiran atau membuatmu lelah hari ini? Ceritakan saja, Si Jeumpa siap mendengarkan tanpa menghakimi. 🌸`,
+        timestamp: new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }),
       },
-    ];
-    setMessages(initialMsgs);
-    saveChatMessages(initialMsgs);
+    ]);
   };
 
   const QUICK_PROMPTS = [
     'Aku capek banget malam ini...',
     'Gimana cara ngomong ke ortu mau belajar?',
-    'Takut banget kalau nilai sekolah jelek...',
+    'Aku merasa bersalah kalau istirahat',
+    'Adik rewel terus pas aku lagi belajar',
   ];
 
   return (
-    <div className="fixed top-16 sm:top-20 bottom-4 sm:bottom-6 right-4 sm:right-6 w-[calc(100vw-32px)] sm:w-96 max-h-[calc(100vh-84px)] z-[999] bg-white rounded-3xl border border-purple-200 shadow-2xl overflow-hidden flex flex-col animate-slide-up">
-      {/* Visual Header with Mascot Si Jeumpa & Active Profile Name */}
-      <div className="bg-gradient-to-r from-purple-600 to-rose-500 p-4 text-white flex items-center justify-between shadow-md">
-        <div className="flex items-center gap-3">
-          <div className="w-11 h-11 rounded-2xl overflow-hidden border-2 border-white/80 shadow-sm flex-shrink-0 bg-white">
+    <div className="fixed top-16 sm:top-20 bottom-4 sm:bottom-6 right-4 sm:right-6 w-[calc(100vw-32px)] sm:w-96 max-h-[calc(100vh-84px)] bg-white rounded-3xl border border-rose-200 shadow-2xl z-[999] flex flex-col overflow-hidden animate-fade-in">
+      {/* Header Widget */}
+      <div className="bg-gradient-to-r from-rose-500 via-pink-500 to-purple-600 p-3.5 sm:p-4 text-white flex items-center justify-between shadow-xs">
+        <div className="flex items-center gap-2.5">
+          <div className="w-10 h-10 rounded-2xl overflow-hidden border-2 border-white/80 shadow-xs flex-shrink-0 bg-white">
             <img
               src="/assets/mascot_si_jeumpa_aceh.jpg"
-              alt="Si Jeumpa Mascot"
+              alt="Maskot Si Jeumpa AI"
               className="w-full h-full object-cover"
             />
           </div>
@@ -171,13 +283,13 @@ export const AICounselorModal: React.FC<AICounselorModalProps> = ({ onClose }) =
             )}
 
             <div
-              className={`max-w-[85%] p-3.5 rounded-2xl text-xs leading-relaxed whitespace-pre-wrap font-medium ${
+              className={`max-w-[85%] p-3.5 rounded-2xl text-xs leading-relaxed font-medium ${
                 msg.sender === 'user'
                   ? 'bg-rose-500 text-white rounded-tr-none shadow-2xs'
                   : 'bg-white text-slate-800 border border-slate-200/90 rounded-tl-none shadow-2xs'
               }`}
             >
-              {msg.text}
+              {renderFormattedText(msg.text, msg.sender === 'user')}
             </div>
 
             {msg.sender === 'user' && (
@@ -198,42 +310,50 @@ export const AICounselorModal: React.FC<AICounselorModalProps> = ({ onClose }) =
       </div>
 
       {/* Prompts & Input Area */}
-      <div className="p-3.5 bg-white border-t border-slate-100 space-y-2.5">
-        {/* Scrollable Recommendation Prompt Pills */}
+      <div className="p-3 bg-white border-t border-rose-100 space-y-2">
+        {/* Quick Suggestion Chips */}
         <div className="space-y-1">
-          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
+          <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider block">
             💡 Rekomendasi Pertanyaan (Geser/Klik):
           </span>
-          <div className="flex gap-1.5 overflow-x-auto pb-1.5 pt-0.5 px-0.5">
-            {QUICK_PROMPTS.map((p, idx) => (
+          <div className="flex gap-1.5 overflow-x-auto pb-1 no-scrollbar">
+            {QUICK_PROMPTS.map((prompt, idx) => (
               <button
                 key={idx}
-                onClick={() => handleSend(p)}
-                className="whitespace-nowrap px-3 py-1.5 rounded-xl bg-purple-50 hover:bg-purple-100 text-purple-700 border border-purple-200 text-[11px] font-bold shadow-2xs transition-all flex-shrink-0 active:scale-95"
+                onClick={() => handleSendMessage(prompt)}
+                disabled={isLoading}
+                className="whitespace-nowrap px-2.5 py-1 rounded-full bg-rose-50 hover:bg-rose-100 text-rose-700 font-bold text-[10px] border border-rose-200/70 transition-all flex-shrink-0 disabled:opacity-50"
               >
-                {p}
+                {prompt}
               </button>
             ))}
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
+        {/* Text Input & Submit Button */}
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            handleSendMessage();
+          }}
+          className="flex items-center gap-2 pt-1"
+        >
           <input
             type="text"
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && handleSend()}
+            value={inputMessage}
+            onChange={(e) => setInputMessage(e.target.value)}
             placeholder="Tulis curhatanmu ke Si Jeumpa..."
-            className="flex-1 p-3.5 rounded-2xl bg-slate-50 border border-slate-200 text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:border-purple-500 font-medium"
+            disabled={isLoading}
+            className="flex-1 px-3.5 py-2.5 rounded-2xl bg-slate-100 border border-slate-200 text-xs font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-rose-400 transition-all disabled:opacity-50"
           />
           <button
-            onClick={() => handleSend()}
-            disabled={!input.trim() || isLoading}
-            className="p-3.5 rounded-2xl bg-gradient-to-r from-purple-600 to-rose-500 text-white disabled:opacity-50 shadow-md shadow-purple-200 hover:scale-105 active:scale-95 transition-all"
+            type="submit"
+            disabled={!inputMessage.trim() || isLoading}
+            className="w-9 h-9 rounded-2xl bg-gradient-to-r from-rose-500 to-purple-600 text-white flex items-center justify-center font-bold shadow-md hover:shadow-lg transition-all disabled:opacity-40 disabled:cursor-not-allowed active:scale-95 flex-shrink-0"
           >
             <IconSend className="w-4 h-4" />
           </button>
-        </div>
+        </form>
       </div>
     </div>
   );

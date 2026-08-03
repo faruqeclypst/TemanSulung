@@ -107,3 +107,8 @@ function getOfflineFallbackResponse(userQuery: string): SimpleAIResponse {
     kataSemangat: 'Kamu tidak sendirian, Si Jeumpa dan kawan-kawan di RISE selalu ada bersamamu! 💕',
   };
 }
+
+export async function getAICounselorResponse(userQuery: string, history?: any[]): Promise<string> {
+  const result = await getTemanCurhatResponse(userQuery);
+  return `${result.pesanHangat}\n\n💡 **Tips dari Si Jeumpa**: ${result.saranPraktis}\n\n✨ ${result.kataSemangat} ✨`;
+}
