@@ -35,9 +35,16 @@ const getInitialTab = (): TabType => {
 export default function App() {
   const [currentTab, setCurrentTab] = useState<TabType>(getInitialTab);
   const [testResult, setTestResult] = useState<SimpleResult | null>(null);
+  const [testFormInitialType, setTestFormInitialType] = useState<'pre' | 'post'>('pre');
   const [isFloatingChatOpen, setIsFloatingChatOpen] = useState<boolean>(false);
 
   const activeUser = getActiveUserProfile();
+
+  const handleTakePostTest = () => {
+    setTestFormInitialType('post');
+    setTestResult(null);
+    handleSetTab('test');
+  };
 
   // Auto scroll to top whenever currentTab or testResult changes
   useEffect(() => {
@@ -118,13 +125,17 @@ export default function App() {
               onOpenChat={() => setIsFloatingChatOpen(true)}
               onOpenGuide={() => handleSetTab('guide')}
               onRetake={handleRetakeTest}
+              onTakePostTest={handleTakePostTest}
             />
           ) : (
-            <AssessmentForm onComplete={handleTestComplete} />
+            <AssessmentForm
+              onComplete={handleTestComplete}
+              initialTestType={testFormInitialType}
+            />
           )
         )}
 
-        {currentTab === 'guide' && <RiseModulesView />}
+        {currentTab === 'guide' && <RiseModulesView onOpenPostTest={handleTakePostTest} />}
 
         {currentTab === 'history' && <HistoryView />}
 

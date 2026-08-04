@@ -201,16 +201,35 @@ export const getSavedResults = (filterName?: string): SimpleResult[] => {
   }
 };
 
+export const getStudentLatestPreTest = (studentNameOrUsername?: string): SimpleResult | null => {
+  if (!studentNameOrUsername) return null;
+  const results = getSavedResults(studentNameOrUsername);
+  const preTests = results.filter((r) => r.testType === 'pre' || !r.testType);
+  return preTests.length > 0 ? preTests[0] : null;
+};
+
+export const getStudentLatestPostTest = (studentNameOrUsername?: string): SimpleResult | null => {
+  if (!studentNameOrUsername) return null;
+  const results = getSavedResults(studentNameOrUsername);
+  const postTests = results.filter((r) => r.testType === 'post');
+  return postTests.length > 0 ? postTests[0] : null;
+};
+
 export const saveSimpleResult = (res: SimpleResult): SimpleResult[] => {
   // Automatically create/set active user profile
   saveUserProfile(res.studentName, res.studentAge);
 
+  const resToSave: SimpleResult = {
+    ...res,
+    testType: res.testType || 'pre'
+  };
+
   const current = getSavedResults();
-  const updated = [res, ...current];
+  const updated = [resToSave, ...current];
   localStorage.setItem(STORAGE_KEYS.RESULTS, JSON.stringify(updated));
 
   // Async push to Online Database (Firebase)
-  onlineDb.saveResult(res).catch(err => console.warn('Failed async result save to online DB', err));
+  onlineDb.saveResult(resToSave).catch(err => console.warn('Failed async result save to online DB', err));
 
   return updated;
 };

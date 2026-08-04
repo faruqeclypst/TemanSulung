@@ -180,12 +180,22 @@ export const HistoryView: React.FC = () => {
                     </div>
 
                     <div className="space-y-1">
-                      <div className="flex items-center justify-between">
+                      <div className="flex items-center justify-between gap-1 flex-wrap">
                         <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black bg-white/80 border border-slate-200 text-slate-800">
                           {r.statusText}
                         </span>
                         <span className="text-xs font-black text-slate-900">
                           {r.score} <span className="text-[9px] font-normal text-slate-500">/100</span>
+                        </span>
+                      </div>
+
+                      <div className="pt-0.5">
+                        <span className={`inline-block px-2 py-0.5 rounded-md text-[9px] font-black uppercase tracking-wider ${
+                          r.testType === 'post'
+                            ? 'bg-purple-600 text-white shadow-2xs'
+                            : 'bg-amber-100 text-amber-900 border border-amber-300'
+                        }`}>
+                          {r.testType === 'post' ? '🎯 Post-Test' : '📋 Tes Awal'}
                         </span>
                       </div>
 
@@ -200,7 +210,7 @@ export const HistoryView: React.FC = () => {
                       <IconCalendar className="w-3 h-3 text-slate-400" />
                       {new Date(r.date).toLocaleDateString('id-ID')}
                     </span>
-                    <span className="text-rose-600">Model RISE</span>
+                    <span className={r.testType === 'post' ? 'text-purple-600 font-black' : 'text-rose-600'}>Model RISE</span>
                   </div>
                 </div>
               );

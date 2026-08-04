@@ -9,6 +9,7 @@ export interface UserProfile {
 export interface SimpleResult {
   id: string;
   date: string;
+  testType?: 'pre' | 'post'; // 'pre' = Tes Awal, 'post' = Post-Test
   studentName: string;
   studentUsername?: string;
   studentAge: number;

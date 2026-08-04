@@ -11,12 +11,14 @@ import {
   IconBrain 
 } from './CustomIcons';
 import { SimpleResult } from '../types';
+import { getStudentLatestPreTest, getStudentLatestPostTest } from '../services/storage';
 
 interface AssessmentResultProps {
   result: SimpleResult;
   onOpenChat: () => void;
   onOpenGuide: () => void;
   onRetake: () => void;
+  onTakePostTest?: () => void;
 }
 
 export const AssessmentResultView: React.FC<AssessmentResultProps> = ({
@@ -24,10 +26,17 @@ export const AssessmentResultView: React.FC<AssessmentResultProps> = ({
   onOpenChat,
   onOpenGuide,
   onRetake,
+  onTakePostTest,
 }) => {
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }, []);
+
+  const studentPreTest = getStudentLatestPreTest(result.studentName);
+  const studentPostTest = getStudentLatestPostTest(result.studentName);
+  const hasBothTests = studentPreTest && studentPostTest;
+
+  const gainPoints = hasBothTests ? (studentPostTest.score - studentPreTest.score) : 0;
 
   return (
     <div className="max-w-xl mx-auto space-y-6 animate-slide-up pb-12">
@@ -35,10 +44,20 @@ export const AssessmentResultView: React.FC<AssessmentResultProps> = ({
       <div className="bg-white rounded-3xl border border-rose-200 shadow-sm p-6 text-center space-y-4 relative overflow-hidden">
         <div className="absolute -top-10 -right-10 w-40 h-40 bg-rose-100/50 rounded-full blur-2xl pointer-events-none"></div>
 
-        {/* Tester Badge */}
-        <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-rose-50 border border-rose-200 text-rose-700 text-xs font-black">
-          <IconUser className="w-4 h-4 text-rose-500" />
-          <span>Profil: {result.studentName} ({result.studentAge} Tahun)</span>
+        {/* Tester Badge & Test Type */}
+        <div className="flex flex-wrap items-center justify-center gap-2">
+          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-rose-50 border border-rose-200 text-rose-700 text-xs font-black">
+            <IconUser className="w-4 h-4 text-rose-500" />
+            <span>Profil: {result.studentName} ({result.studentAge} Tahun)</span>
+          </div>
+
+          <div className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-black border ${
+            result.testType === 'post'
+              ? 'bg-purple-100 text-purple-800 border-purple-300'
+              : 'bg-amber-100 text-amber-800 border-amber-300'
+          }`}>
+            <span>{result.testType === 'post' ? '🎯 Hasil Post-Test' : '📋 Hasil Tes Awal (Pre-Test)'}</span>
+          </div>
         </div>
 
         {/* Score Gauge Circle */}
@@ -52,7 +71,7 @@ export const AssessmentResultView: React.FC<AssessmentResultProps> = ({
               d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
             />
             <path
-              className="text-rose-500 transition-all duration-1000 ease-out"
+              className={`${result.testType === 'post' ? 'text-purple-600' : 'text-rose-500'} transition-all duration-1000 ease-out`}
               strokeDasharray={`${result.score}, 100`}
               strokeWidth="3.5"
               strokeLinecap="round"
@@ -77,6 +96,45 @@ export const AssessmentResultView: React.FC<AssessmentResultProps> = ({
           </p>
         </div>
       </div>
+
+      {/* Comparison Banner (If Pre-Test and Post-Test exist) */}
+      {hasBothTests && (
+        <div className="bg-gradient-to-br from-purple-900 via-indigo-900 to-rose-900 text-white p-6 rounded-3xl shadow-lg space-y-4 relative overflow-hidden">
+          <div className="flex items-center justify-between border-b border-white/20 pb-3">
+            <div className="flex items-center gap-2">
+              <span className="text-xl">📊</span>
+              <h2 className="text-sm font-black tracking-wide">Analisis Komparatif Resiliensi</h2>
+            </div>
+            <span className="px-3 py-1 rounded-full bg-white/20 backdrop-blur-md text-xs font-black">
+              Pre-Test vs Post-Test
+            </span>
+          </div>
+
+          <div className="grid grid-cols-3 gap-3 text-center">
+            <div className="p-3 bg-white/10 backdrop-blur-md rounded-2xl border border-white/10">
+              <span className="text-[10px] font-bold uppercase text-purple-200 block">Tes Awal</span>
+              <div className="text-xl font-black text-amber-300">{studentPreTest.score}</div>
+              <span className="text-[9px] text-white/70">Baseline</span>
+            </div>
+
+            <div className="p-3 bg-white/10 backdrop-blur-md rounded-2xl border border-white/10">
+              <span className="text-[10px] font-bold uppercase text-purple-200 block">Post-Test</span>
+              <div className="text-xl font-black text-emerald-300">{studentPostTest.score}</div>
+              <span className="text-[9px] text-white/70">Setelah Modul</span>
+            </div>
+
+            <div className="p-3 bg-white/20 backdrop-blur-md rounded-2xl border border-white/20">
+              <span className="text-[10px] font-bold uppercase text-purple-200 block">Peningkatan</span>
+              <div className={`text-xl font-black ${gainPoints >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+                {gainPoints >= 0 ? `+${gainPoints}` : gainPoints} Poin
+              </div>
+              <span className="text-[9px] text-white/90 font-bold">
+                {gainPoints > 0 ? '🚀 Meningkat!' : gainPoints === 0 ? '✨ Stabil' : '🛋️ Perlu Evaluasi'}
+              </span>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Rincian 4 Dimensi Resiliensi (Martin & Marsh 2006) */}
       <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-xs space-y-4">
@@ -138,6 +196,27 @@ export const AssessmentResultView: React.FC<AssessmentResultProps> = ({
           ))}
         </ul>
       </div>
+
+      {/* Next Step Callout for Post-Test */}
+      {result.testType !== 'post' && onTakePostTest && (
+        <div className="p-5 rounded-3xl bg-gradient-to-r from-purple-500 to-indigo-600 text-white shadow-md space-y-3">
+          <div className="flex items-center gap-2">
+            <span className="text-2xl">🎯</span>
+            <div>
+              <h3 className="text-sm font-black">Langkah Selanjutnya: Isi Post-Test Resiliensi</h3>
+              <p className="text-xs text-purple-100 font-medium">
+                Setelah mempelajari Modul RISE &amp; berkonsultasi dengan Si Jeumpa, jangan lupa isi Post-Test untuk melihat perkembanganmu! (Dapat diisi kapan saja).
+              </p>
+            </div>
+          </div>
+          <button
+            onClick={onTakePostTest}
+            className="w-full py-3 rounded-2xl bg-white text-purple-900 font-black text-xs hover:bg-purple-50 shadow-xs transition-all active:scale-98"
+          >
+            Ambil Post-Test Sekarang →
+          </button>
+        </div>
+      )}
 
       {/* Action Buttons */}
       <div className="space-y-2">

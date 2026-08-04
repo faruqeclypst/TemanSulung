@@ -5,11 +5,20 @@ import { saveSimpleResult, getActiveUserProfile, getUserProfiles, saveUserProfil
 
 interface AssessmentFormProps {
   onComplete: (result: SimpleResult) => void;
+  initialTestType?: 'pre' | 'post';
 }
 
-export const AssessmentForm: React.FC<AssessmentFormProps> = ({ onComplete }) => {
+export const AssessmentForm: React.FC<AssessmentFormProps> = ({ onComplete, initialTestType = 'pre' }) => {
   const [activeUser, setActiveUser] = useState<UserProfile | null>(() => getActiveUserProfile());
   const [step, setStep] = useState<number>(1);
+  const [testType, setTestType] = useState<'pre' | 'post'>(initialTestType);
+
+  // Sync testType when initialTestType prop changes
+  useEffect(() => {
+    if (initialTestType) {
+      setTestType(initialTestType);
+    }
+  }, [initialTestType]);
 
   // Continuously sync with active user session from header bar
   useEffect(() => {
@@ -101,7 +110,7 @@ export const AssessmentForm: React.FC<AssessmentFormProps> = ({ onComplete }) =>
 
     let statusText = 'Resiliensi Sangat Baik 🌸';
     let statusBadge = 'bg-emerald-100 text-emerald-800 border-emerald-300';
-    let summary = `Halo ${activeUser?.name || 'Siswi'}, kemampuan resiliensimu dalam menyeimbangkan tugas rumah tangga dan pelajaran sekolah sudah sangat solid dan menginspirasi!`;
+    let summary = `Halo ${activeUser?.name || 'Siswi'}, ${testType === 'post' ? 'setelah mempelajari modul & konsultasi Si Jeumpa, ' : ''}kemampuan resiliensimu dalam menyeimbangkan tugas rumah tangga dan pelajaran sekolah sudah sangat solid dan menginspirasi!`;
     let primaryStressors = ['Pengaturan Waktu Domestik', 'Perfeksionisme Contoh Adik'];
     let tips = [
       'Pertahankan jadwal belajar mikro 25 menit (Pomodoro) agar konsentrasi otak tetap berada di puncak.',
@@ -133,6 +142,7 @@ export const AssessmentForm: React.FC<AssessmentFormProps> = ({ onComplete }) =>
     const finalResult: SimpleResult = {
       id: Date.now().toString(),
       date: new Date().toISOString(),
+      testType,
       studentName: activeUser?.name || 'Anonim',
       studentAge: activeUser?.age || 16,
       domesticHours,
@@ -206,16 +216,48 @@ export const AssessmentForm: React.FC<AssessmentFormProps> = ({ onComplete }) =>
 
   return (
     <div className="max-w-2xl mx-auto space-y-6 sm:space-y-8 animate-fade-in pb-12">
+      {/* Test Mode Switcher Tabs */}
+      <div className="flex items-center justify-center gap-2 p-1.5 bg-white/80 backdrop-blur-md rounded-2xl border border-rose-200 shadow-2xs max-w-md mx-auto">
+        <button
+          onClick={() => { setTestType('pre'); setStep(1); }}
+          className={`flex-1 py-2.5 px-4 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-1.5 ${
+            testType === 'pre'
+              ? 'bg-rose-500 text-white shadow-sm'
+              : 'text-slate-600 hover:bg-rose-50'
+          }`}
+        >
+          <span>📋 Tes Awal (Pre-Test)</span>
+        </button>
+
+        <button
+          onClick={() => { setTestType('post'); setStep(1); }}
+          className={`flex-1 py-2.5 px-4 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-1.5 ${
+            testType === 'post'
+              ? 'bg-purple-600 text-white shadow-sm'
+              : 'text-slate-600 hover:bg-purple-50'
+          }`}
+        >
+          <span>🎯 Post-Test Resiliensi</span>
+        </button>
+      </div>
+
       {/* Header Banner Panel Card */}
       <div className="bg-white/95 backdrop-blur-md p-6 sm:p-7 rounded-3xl border border-rose-100 shadow-sm text-center space-y-3 animate-fade-in">
-        <span className="px-3.5 py-1.5 rounded-full bg-rose-100 text-rose-700 font-extrabold text-xs inline-flex items-center gap-1.5 shadow-2xs">
-          <IconSparkles className="w-4 h-4 text-rose-500" /> Skrining Resiliensi Akademik RISE
+        <span className={`px-3.5 py-1.5 rounded-full font-extrabold text-xs inline-flex items-center gap-1.5 shadow-2xs ${
+          testType === 'post'
+            ? 'bg-purple-100 text-purple-800 border border-purple-200'
+            : 'bg-rose-100 text-rose-700 border border-rose-200'
+        }`}>
+          <IconSparkles className={`w-4 h-4 ${testType === 'post' ? 'text-purple-600' : 'text-rose-500'}`} />
+          {testType === 'post' ? 'Post-Test Evaluasi Akhir Resiliensi RISE' : 'Tes Awal Cek Resiliensi Akademik (Pre-Test)'}
         </span>
         <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
-          Evaluasi Daya Tahan &amp; Beban Eldest Daughter
+          {testType === 'post' ? 'Ukur Peningkatan Resiliensimu' : 'Evaluasi Daya Tahan & Beban Eldest Daughter'}
         </h1>
         <p className="text-xs sm:text-sm text-slate-500 font-medium max-w-lg mx-auto leading-relaxed">
-          Isi 8 pertanyaan singkat berikut untuk mengetahui tingkat resiliensimu dan mendapatkan rekomendasi penanganan otomatis.
+          {testType === 'post'
+            ? 'Isi 8 pertanyaan Post-Test berikut untuk mengevaluasi perkembangan daya tahanmu setelah mempelajari Modul RISE & berkonsultasi dengan Si Jeumpa AI.'
+            : 'Isi 8 pertanyaan singkat berikut untuk mengetahui tingkat resiliensimu dan mendapatkan rekomendasi penanganan otomatis.'}
         </p>
 
         {/* Progress Bar */}
@@ -226,7 +268,11 @@ export const AssessmentForm: React.FC<AssessmentFormProps> = ({ onComplete }) =>
           </div>
           <div className="w-full h-2.5 bg-slate-100 rounded-full overflow-hidden p-0.5 border border-slate-200/60 shadow-inner">
             <div 
-              className="h-full bg-gradient-to-r from-rose-500 via-pink-500 to-purple-600 transition-all duration-300 rounded-full"
+              className={`h-full transition-all duration-300 rounded-full ${
+                testType === 'post'
+                  ? 'bg-gradient-to-r from-purple-500 via-indigo-500 to-rose-500'
+                  : 'bg-gradient-to-r from-rose-500 via-pink-500 to-purple-600'
+              }`}
               style={{ width: `${(step / 2) * 100}%` }}
             ></div>
           </div>

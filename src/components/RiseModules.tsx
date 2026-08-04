@@ -17,7 +17,11 @@ import {
 import { getModuleProgress, updateModuleProgress } from '../services/storage';
 import { ModuleProgress } from '../types';
 
-export const RiseModulesView: React.FC = () => {
+interface RiseModulesProps {
+  onOpenPostTest?: () => void;
+}
+
+export const RiseModulesView: React.FC<RiseModulesProps> = ({ onOpenPostTest }) => {
   const [activeTab, setActiveTab] = useState<1 | 2 | 3 | 4>(1);
   const [progress, setProgress] = useState<ModuleProgress>(getModuleProgress());
 
@@ -574,6 +578,28 @@ export const RiseModulesView: React.FC = () => {
               </div>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* Post-Test Callout Banner */}
+      {onOpenPostTest && (
+        <div className="p-6 rounded-3xl bg-gradient-to-r from-purple-600 via-pink-600 to-rose-500 text-white shadow-lg space-y-3 text-center sm:text-left sm:flex sm:items-center sm:justify-between sm:space-y-0">
+          <div className="space-y-1">
+            <div className="flex items-center gap-2 justify-center sm:justify-start">
+              <span className="text-2xl">🎯</span>
+              <h3 className="text-base font-black">Sudah Selesai Mempelajari Modul RISE?</h3>
+            </div>
+            <p className="text-xs text-purple-100 font-medium leading-relaxed max-w-xl">
+              Ukur peningkatan dan perkembangan daya tahan resiliensimu setelah membaca modul dengan mengisi <strong>Post-Test Resiliensi</strong>.
+            </p>
+          </div>
+
+          <button
+            onClick={onOpenPostTest}
+            className="px-6 py-3.5 rounded-2xl bg-white text-purple-900 font-black text-xs hover:bg-purple-50 shadow-md transition-all active:scale-95 whitespace-nowrap"
+          >
+            Isi Post-Test Sekarang →
+          </button>
         </div>
       )}
     </div>

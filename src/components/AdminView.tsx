@@ -159,7 +159,7 @@ export const AdminView: React.FC = () => {
       setIsAuthenticated(true);
       setAuthError(null);
     } else {
-      setAuthError('Username atau Password Admin salah! Masukkan admin@gmail.com / sudahlupa');
+      setAuthError('Username atau Password Admin salah! Silakan periksa kembali.');
     }
   };
 
@@ -185,34 +185,50 @@ export const AdminView: React.FC = () => {
       return;
     }
 
-    const dataToExport = results.map((r, idx) => {
-      const studentNameStr = r?.studentName || 'Anonim';
-      const p = profiles.find((prof) => 
-        (prof?.name || '').toLowerCase() === studentNameStr.toLowerCase() ||
-        (prof?.username || '').toLowerCase() === studentNameStr.toLowerCase()
+    const dataToExport = profiles.map((p, idx) => {
+      const pName = p?.name || 'Anonim';
+      const pUsername = p?.username || pName.toLowerCase().replace(/\s+/g, '_');
+      const studentResults = results.filter((r) =>
+        (r?.studentName || '').toLowerCase() === pName.toLowerCase() ||
+        (r?.studentName || '').toLowerCase() === pUsername.toLowerCase()
       );
-      const fullName = p ? p.name : studentNameStr;
-      const username = p ? (p.username || p.name.toLowerCase().replace(/\s+/g, '_')) : studentNameStr;
-      const age = p ? p.age : r?.studentAge || '-';
-      const prog = p ? getStudentModules(p.id) : undefined;
+
+      const preTest = studentResults.find((r) => r.testType === 'pre' || !r.testType);
+      const postTest = studentResults.find((r) => r.testType === 'post');
+      const prog = getStudentModules(p.id);
+
+      const preScore = preTest ? preTest.score : '-';
+      const preCategory = preTest ? getStatusLabel(preTest) : '-';
+      const preDate = preTest ? formatDate(preTest.date) : '-';
+
+      const postScore = postTest ? postTest.score : '-';
+      const postCategory = postTest ? getStatusLabel(postTest) : '-';
+      const postDate = postTest ? formatDate(postTest.date) : '-';
+
+      let gainStr = '-';
+      if (typeof preScore === 'number' && typeof postScore === 'number') {
+        const diff = postScore - preScore;
+        gainStr = diff >= 0 ? `+${diff} Poin` : `${diff} Poin`;
+      }
 
       return {
         'No': idx + 1,
-        'Nama Lengkap Siswi': fullName,
-        'Username / NISN Unik': username,
-        'Usia (Tahun)': age,
+        'Nama Lengkap Siswi': pName,
+        'Username / NISN Unik': pUsername,
+        'Usia (Tahun)': p?.age || '-',
         'PIN Profil (Privasi)': '•••••• (Disamarkan)',
-        'Beban Domestik (jam/hari)': r?.domesticHours || 0,
-        'Jumlah Adik': r?.siblingCount || 0,
-        'Skor Total Resiliensi': r?.score || 0,
-        'Kategori Resiliensi': getStatusLabel(r),
+        'Beban Domestik (jam/hari)': preTest?.domesticHours || postTest?.domesticHours || 0,
+        'Jumlah Adik': preTest?.siblingCount || postTest?.siblingCount || 0,
+        'Skor Tes Awal (Pre-Test)': preScore,
+        'Kategori Tes Awal': preCategory,
+        'Tanggal Tes Awal': preDate,
+        'Skor Post-Test': postScore,
+        'Kategori Post-Test': postCategory,
+        'Tanggal Post-Test': postDate,
+        'Peningkatan Resiliensi': gainStr,
         'Progress Modul RISE': getModuleSummaryString(prog),
-        'Skor Confidence (%)': r?.confidenceScore || 0,
-        'Skor Control (%)': r?.controlScore || 0,
-        'Skor Composure (%)': r?.composureScore || 0,
-        'Skor Commitment (%)': r?.commitmentScore || 0,
-        'Tanggal Evaluasi': formatDate(r?.date),
-        'Rekomendasi & Tips BK': (r?.tips || []).join('; ')
+        'Total Evaluasi Tes': studentResults.length,
+        'Rekomendasi & Tips BK': ((postTest || preTest)?.tips || []).join('; ')
       };
     });
 
@@ -227,21 +243,22 @@ export const AdminView: React.FC = () => {
       { wch: 20 },  // PIN
       { wch: 28 },  // Beban Domestik
       { wch: 14 },  // Jumlah Adik
-      { wch: 22 },  // Skor Total
-      { wch: 26 },  // Kategori Resiliensi
+      { wch: 22 },  // Skor Tes Awal
+      { wch: 24 },  // Kategori Tes Awal
+      { wch: 20 },  // Tanggal Tes Awal
+      { wch: 20 },  // Skor Post-Test
+      { wch: 24 },  // Kategori Post-Test
+      { wch: 20 },  // Tanggal Post-Test
+      { wch: 22 },  // Peningkatan Resiliensi
       { wch: 38 },  // Progress Modul
-      { wch: 22 },  // Confidence
-      { wch: 22 },  // Control
-      { wch: 22 },  // Composure
-      { wch: 22 },  // Commitment
-      { wch: 22 },  // Tanggal Evaluasi
+      { wch: 20 },  // Total Evaluasi
       { wch: 55 },  // Rekomendasi & Tips
     ];
 
     const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, 'Data Resiliensi RISE');
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Evaluasi Resiliensi RISE');
 
-    const fileName = `RISE_Data_Resiliensi_Siswi_${new Date().toISOString().slice(0, 10)}.xlsx`;
+    const fileName = `RISE_Evaluasi_Pre_Post_Test_${new Date().toISOString().slice(0, 10)}.xlsx`;
     XLSX.writeFile(workbook, fileName);
   };
 
@@ -306,7 +323,7 @@ export const AdminView: React.FC = () => {
             <label className="text-xs font-bold text-slate-700 block">Username / Email Admin</label>
             <input
               type="text"
-              placeholder="admin@gmail.com"
+              placeholder="Username / Email Admin"
               value={adminUsername}
               onChange={(e) => {
                 setAdminUsername(e.target.value);

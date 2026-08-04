@@ -163,7 +163,7 @@ export const UserProfileBar: React.FC<UserProfileBarProps> = ({ onProfileChanged
       if (onNavigateTab) onNavigateTab('admin');
       if (onProfileChanged) onProfileChanged(adminProf);
     } else {
-      setAdminAuthError('Username atau Password Admin salah! Masukkan admin@gmail.com / sudahlupa');
+      setAdminAuthError('Username atau Password Admin salah! Silakan periksa kembali.');
     }
   };
 
@@ -307,7 +307,7 @@ export const UserProfileBar: React.FC<UserProfileBarProps> = ({ onProfileChanged
                     <label className="text-[10px] font-bold text-purple-950 block">Username / Email Admin</label>
                     <input
                       type="text"
-                      placeholder="admin@gmail.com"
+                      placeholder="Username / Email Admin"
                       value={adminUsername}
                       onChange={(e) => {
                         setAdminUsername(e.target.value);

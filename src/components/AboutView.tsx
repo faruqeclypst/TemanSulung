@@ -222,7 +222,7 @@ export const AboutView: React.FC = () => {
               🛡️ Bagi Admin / Konselor BK / Peneliti OPSI:
             </span>
             <ol className="list-decimal pl-4 text-purple-950 font-medium space-y-1.5 leading-relaxed">
-              <li><strong>Login Admin</strong>: Klik <code>Login Profil Siswi</code> ➔ <code>🔐 Mode Admin</code>. Masukkan Email <code>admin@gmail.com</code> / Password <code>sudahlupa</code> (atau username <code>admin</code>).</li>
+              <li><strong>Login Admin</strong>: Klik <code>Login Profil Siswi</code> ➔ <code>🔐 Mode Admin</code> untuk masuk ke panel khusus Konselor BK / Admin Sekolah.</li>
               <li><strong>Dashboard Admin 5-Kolom</strong>: Pantau daftar siswi, skor resiliensi terbaru, status penyelesaian 4 modul, dan lakukan <strong>Reset PIN 6-Digit</strong> jika siswi lupa PIN.</li>
               <li><strong>Ekspor Asli Excel (.xlsx)</strong>: Klik <code>Ekspor Excel (.xlsx)</code> untuk mendownload rekapitulasi data penelitian OPSI yang rapi dalam format spreadsheet Microsoft Excel.</li>
               <li><strong>Pemantauan Catatan Seluruh Siswi</strong>: Masuk ke menu <code>Catatan</code> untuk memantau seluruh riwayat tes &amp; jurnal curhat siswi lengkap dengan fitur search.</li>
