@@ -676,47 +676,152 @@ export const AdminView: React.FC = () => {
               })()}
             </div>
 
-            {/* Test History */}
+            {/* Test History & Separation: Tes Cek vs Post-Test */}
             <div>
-              <h4 className="font-bold text-slate-800 mb-3 text-sm">Riwayat Tes Resiliensi Akademik:</h4>
-              {results.filter((r) => 
-                (r?.studentName || '').toLowerCase() === selectedStudent.name.toLowerCase() ||
-                (r?.studentName || '').toLowerCase() === (selectedStudent.username || '').toLowerCase()
-              ).length === 0 ? (
-                <p className="text-xs text-slate-400 italic">Siswi ini belum menyelesaikan tes resiliensi.</p>
-              ) : (
-                <div className="space-y-3">
-                  {results
-                    .filter((r) => 
-                      (r?.studentName || '').toLowerCase() === selectedStudent.name.toLowerCase() ||
-                      (r?.studentName || '').toLowerCase() === (selectedStudent.username || '').toLowerCase()
-                    )
-                    .map((r, idx) => (
-                      <div key={idx} className="p-4 bg-slate-50 rounded-2xl border border-slate-200 text-xs space-y-2">
-                        <div className="flex items-center justify-between">
-                          <span className="font-black text-slate-800 text-sm">Skor: {r?.score || 0} / 100 ({getStatusLabel(r)})</span>
-                          <span className="text-slate-400 font-medium">{formatDate(r?.date)}</span>
+              <h4 className="font-extrabold text-slate-900 mb-3 text-sm flex items-center justify-between">
+                <span>📊 Hasil Tes Cek &amp; Post-Test Resiliensi Akademik:</span>
+              </h4>
+
+              {(() => {
+                const studentResults = results.filter((r) => 
+                  (r?.studentName || '').toLowerCase() === selectedStudent.name.toLowerCase() ||
+                  (r?.studentName || '').toLowerCase() === (selectedStudent.username || '').toLowerCase()
+                );
+
+                if (studentResults.length === 0) {
+                  return <p className="text-xs text-slate-400 italic">Siswi ini belum menyelesaikan tes resiliensi.</p>;
+                }
+
+                const preTest = studentResults.find((r) => r.testType === 'pre' || !r.testType);
+                const postTest = studentResults.find((r) => r.testType === 'post');
+
+                return (
+                  <div className="space-y-4">
+                    {/* Ringkasan Perbandingan (Jika Ada Keduanya) */}
+                    {preTest && postTest && (
+                      <div className="p-4 rounded-2xl bg-gradient-to-r from-purple-900 via-indigo-900 to-rose-900 text-white shadow-sm space-y-3">
+                        <div className="flex items-center justify-between text-xs font-black border-b border-white/20 pb-2">
+                          <span>📈 Perbandingan Resiliensi (Baseline vs Post-Test)</span>
+                          <span className="px-2 py-0.5 rounded-full bg-white/20 text-[10px]">Pre vs Post</span>
                         </div>
-                        <div className="grid grid-cols-2 gap-2 text-[11px] bg-white p-3 rounded-xl border border-slate-100">
-                          <div>Confidence (Keyakinan): <strong>{r?.confidenceScore || 0}</strong></div>
-                          <div>Control (Kendali Waktu): <strong>{r?.controlScore || 0}</strong></div>
-                          <div>Composure (Ketenangan): <strong>{r?.composureScore || 0}</strong></div>
-                          <div>Commitment (Ketekunan): <strong>{r?.commitmentScore || 0}</strong></div>
-                        </div>
-                        {r?.tips && r.tips.length > 0 && (
-                          <div>
-                            <strong className="text-slate-700">Rekomendasi Penanganan BK:</strong>
-                            <ul className="list-disc pl-4 text-slate-600 space-y-0.5 mt-1">
-                              {r.tips.map((tip, i) => (
-                                <li key={i}>{tip}</li>
-                              ))}
-                            </ul>
+                        <div className="grid grid-cols-3 gap-2 text-center text-xs">
+                          <div className="bg-white/10 p-2.5 rounded-xl border border-white/10">
+                            <div className="text-[10px] text-purple-200 uppercase font-bold">1. Tes Cek (Pre)</div>
+                            <div className="text-lg font-black text-amber-300">{preTest.score} <span className="text-[9px] font-normal text-white/70">/100</span></div>
+                            <div className="text-[9px] text-white/70">{formatDate(preTest.date)}</div>
                           </div>
+                          <div className="bg-white/10 p-2.5 rounded-xl border border-white/10">
+                            <div className="text-[10px] text-purple-200 uppercase font-bold">2. Post-Test</div>
+                            <div className="text-lg font-black text-emerald-300">{postTest.score} <span className="text-[9px] font-normal text-white/70">/100</span></div>
+                            <div className="text-[9px] text-white/70">{formatDate(postTest.date)}</div>
+                          </div>
+                          <div className="bg-white/20 p-2.5 rounded-xl border border-white/20">
+                            <div className="text-[10px] text-purple-200 uppercase font-bold">Peningkatan Gain</div>
+                            <div className={`text-lg font-black ${postTest.score - preTest.score >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+                              {postTest.score - preTest.score >= 0 ? `+${postTest.score - preTest.score}` : postTest.score - preTest.score} Poin
+                            </div>
+                            <div className="text-[9px] font-bold text-emerald-300">
+                              {postTest.score > preTest.score ? '🚀 Resiliensi Meningkat' : '✨ Resiliensi Stabil'}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Pembagian Terpisah 2 Kotak: 1. Tes Cek vs 2. Post-Test */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      {/* KOTAK 1: TES CEK (PRE-TEST) */}
+                      <div className="p-4 rounded-2xl bg-amber-50/80 border border-amber-200 space-y-2">
+                        <div className="flex items-center justify-between border-b border-amber-200/80 pb-2">
+                          <span className="font-extrabold text-amber-950 text-xs flex items-center gap-1.5">
+                            📋 1. Tes Cek (Pre-Test)
+                          </span>
+                          {preTest ? (
+                            <span className="px-2 py-0.5 rounded-full bg-amber-200 text-amber-900 font-extrabold text-[10px]">
+                              Skor: {preTest.score} / 100
+                            </span>
+                          ) : (
+                            <span className="text-[10px] text-amber-700 italic">Belum Diisi</span>
+                          )}
+                        </div>
+
+                        {preTest ? (
+                          <div className="space-y-2 text-xs">
+                            <div className="flex items-center justify-between">
+                              <span className="font-bold text-amber-900">{getStatusLabel(preTest)}</span>
+                              <span className="text-[10px] text-slate-500">{formatDate(preTest.date)}</span>
+                            </div>
+                            <div className="grid grid-cols-2 gap-1 text-[10px] bg-white p-2 rounded-xl border border-amber-100">
+                              <div>Confidence: <strong>{preTest.confidenceScore}%</strong></div>
+                              <div>Control: <strong>{preTest.controlScore}%</strong></div>
+                              <div>Composure: <strong>{preTest.composureScore}%</strong></div>
+                              <div>Commitment: <strong>{preTest.commitmentScore}%</strong></div>
+                            </div>
+                            <p className="text-[11px] text-slate-700 font-medium">"{preTest.summary}"</p>
+                          </div>
+                        ) : (
+                          <p className="text-xs text-amber-800/70 italic py-2">Siswi belum pernah mengisi Tes Cek Awal.</p>
                         )}
                       </div>
-                    ))}
-                </div>
-              )}
+
+                      {/* KOTAK 2: POST-TEST */}
+                      <div className="p-4 rounded-2xl bg-purple-50/80 border border-purple-200 space-y-2">
+                        <div className="flex items-center justify-between border-b border-purple-200/80 pb-2">
+                          <span className="font-extrabold text-purple-950 text-xs flex items-center gap-1.5">
+                            🎯 2. Post-Test (Akhir)
+                          </span>
+                          {postTest ? (
+                            <span className="px-2 py-0.5 rounded-full bg-purple-600 text-white font-extrabold text-[10px]">
+                              Skor: {postTest.score} / 100
+                            </span>
+                          ) : (
+                            <span className="text-[10px] text-purple-700 italic">Belum Diisi</span>
+                          )}
+                        </div>
+
+                        {postTest ? (
+                          <div className="space-y-2 text-xs">
+                            <div className="flex items-center justify-between">
+                              <span className="font-bold text-purple-900">{getStatusLabel(postTest)}</span>
+                              <span className="text-[10px] text-slate-500">{formatDate(postTest.date)}</span>
+                            </div>
+                            <div className="grid grid-cols-2 gap-1 text-[10px] bg-white p-2 rounded-xl border border-purple-100">
+                              <div>Confidence: <strong>{postTest.confidenceScore}%</strong></div>
+                              <div>Control: <strong>{postTest.controlScore}%</strong></div>
+                              <div>Composure: <strong>{postTest.composureScore}%</strong></div>
+                              <div>Commitment: <strong>{postTest.commitmentScore}%</strong></div>
+                            </div>
+                            <p className="text-[11px] text-slate-700 font-medium">"{postTest.summary}"</p>
+                          </div>
+                        ) : (
+                          <p className="text-xs text-purple-800/70 italic py-2">Siswi belum menyelesaikan Post-Test.</p>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Timeline Riwayat Lengkap (Jika Ada Riwayat Lain) */}
+                    {studentResults.length > 2 && (
+                      <div className="space-y-2 pt-2 border-t border-slate-100">
+                        <h5 className="text-[11px] font-bold text-slate-600 uppercase tracking-wider">Seluruh Riwayat Evaluasi Siswi:</h5>
+                        {studentResults.map((r, idx) => (
+                          <div key={idx} className="p-3 bg-slate-50 rounded-xl border border-slate-200 text-xs flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                              <span className={`px-2 py-0.5 rounded text-[10px] font-black uppercase ${
+                                r.testType === 'post' ? 'bg-purple-600 text-white' : 'bg-amber-100 text-amber-900'
+                              }`}>
+                                {r.testType === 'post' ? 'Post-Test' : 'Tes Cek'}
+                              </span>
+                              <span className="font-extrabold text-slate-800">Skor: {r.score}</span>
+                              <span className="text-slate-500">({getStatusLabel(r)})</span>
+                            </div>
+                            <span className="text-slate-400 text-[10px] font-medium">{formatDate(r.date)}</span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                );
+              })()}
             </div>
 
             {/* Journal Entries */}
