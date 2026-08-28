@@ -6,6 +6,7 @@ import {
   getSavedJournals, 
   getModuleProgress, 
   clearAllStorageData,
+  deleteUserProfile,
   resetStudentPin,
   setActiveUserProfile,
   getActiveUserProfile 
@@ -83,8 +84,9 @@ export const AdminView: React.FC = () => {
       setResults([]);
       setJournals([]);
       setModuleMap({});
+      setSelectedStudent(null);
       setLoading(false);
-      alert('Data uji coba berhasil dibersihkan!');
+      alert('Data uji coba berhasil dibersihkan di semua server & perangkat!');
     }
   };
 
@@ -109,21 +111,30 @@ export const AdminView: React.FC = () => {
     }
   };
 
-  // Load online & local data
+  const handleDeleteStudent = async (student: UserProfile) => {
+    if (window.confirm(`Hapus siswi "${student.name}" (@${student.username || student.name}) beserta seluruh data hasil tes dan jurnalnya secara permanen?`)) {
+      setLoading(true);
+      await deleteUserProfile(student.id);
+      if (selectedStudent?.id === student.id) {
+        setSelectedStudent(null);
+      }
+      await loadData();
+      setLoading(false);
+      alert(`Profil siswi "${student.name}" berhasil dihapus.`);
+    }
+  };
+
+  // Load online data directly from Firebase Realtime Database
   const loadData = async () => {
     setLoading(true);
     try {
       const conn = await onlineDb.checkConnection();
       setIsOnline(conn);
 
-      let p = await onlineDb.fetchProfiles();
-      let r = await onlineDb.fetchResults();
-      let j = await onlineDb.fetchJournals();
-      let m = await onlineDb.fetchAllModuleProgress();
-
-      if (!p || p.length === 0) p = getUserProfiles();
-      if (!r || r.length === 0) r = getSavedResults();
-      if (!j || j.length === 0) j = getSavedJournals();
+      const p = await onlineDb.fetchProfiles();
+      const r = await onlineDb.fetchResults();
+      const j = await onlineDb.fetchJournals();
+      const m = await onlineDb.fetchAllModuleProgress();
 
       setProfiles(Array.isArray(p) ? p.filter(Boolean) : []);
       setResults(Array.isArray(r) ? r.filter(Boolean) : []);
@@ -164,8 +175,7 @@ export const AdminView: React.FC = () => {
   };
 
   const getStudentModules = (profileId: string): ModuleProgress => {
-    if (moduleMap[profileId]) return moduleMap[profileId];
-    return getModuleProgress();
+    return moduleMap[profileId] || { module1: false, module2: false, module3: false, module4: false };
   };
 
   const getModuleSummaryString = (prog?: ModuleProgress): string => {
@@ -576,6 +586,13 @@ export const AdminView: React.FC = () => {
                         >
                           Detail BK
                         </button>
+                        <button
+                          onClick={() => handleDeleteStudent(p)}
+                          title="Hapus profil siswi dan datanya"
+                          className="px-2.5 py-1.5 bg-red-50 hover:bg-red-100 text-red-700 border border-red-200 font-bold rounded-xl text-xs transition-all shadow-2xs"
+                        >
+                          Hapus
+                        </button>
                       </td>
                     </tr>
                   );
@@ -610,6 +627,12 @@ export const AdminView: React.FC = () => {
                   className="px-3 py-1.5 bg-amber-50 hover:bg-amber-100 text-amber-700 border border-amber-200 font-bold rounded-xl text-xs transition-all"
                 >
                   🔑 Reset PIN
+                </button>
+                <button
+                  onClick={() => handleDeleteStudent(selectedStudent)}
+                  className="px-3 py-1.5 bg-red-50 hover:bg-red-100 text-red-700 border border-red-200 font-bold rounded-xl text-xs transition-all flex items-center gap-1"
+                >
+                  🗑️ Hapus
                 </button>
                 <button
                   onClick={() => setSelectedStudent(null)}

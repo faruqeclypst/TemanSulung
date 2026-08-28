@@ -1,11 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { IconHistory, IconCalendar, IconChat, IconUser } from './CustomIcons';
 import { 
-  getSavedResults, 
-  getSavedJournals, 
-  getActiveUserProfile, 
-  getUserProfiles 
+  getActiveUserProfile 
 } from '../services/storage';
+import { onlineDb } from '../services/onlineDb';
 import { SimpleResult, CBTJournalEntry, UserProfile } from '../types';
 
 export const HistoryView: React.FC = () => {
@@ -25,25 +23,28 @@ export const HistoryView: React.FC = () => {
 
   const isAdminActive = activeUser?.id === 'admin_bk' || activeUser?.username === 'admin';
 
-  // Reactively sync activeUser session & load records (All records for Admin, Private for Student)
+  // Reactively sync activeUser session & load records directly from Firebase
   useEffect(() => {
-    const syncActiveUser = () => {
+    const loadHistory = async () => {
       const current = getActiveUserProfile();
       setActiveUser(current);
 
+      if (!current) {
+        setResults([]);
+        setJournals([]);
+        return;
+      }
+
       const isAdmin = current?.id === 'admin_bk' || current?.username === 'admin';
+      const allRes = await onlineDb.fetchResults();
+      const allJournals = await onlineDb.fetchJournals();
 
       if (isAdmin) {
         // Admin gets access to ALL student test results & ALL student CBT journals
-        const allRes = getSavedResults();
-        const allJournals = getSavedJournals();
         setResults(allRes);
         setJournals(allJournals);
-      } else if (current) {
+      } else {
         // Student gets access strictly to her own private records
-        const allRes = getSavedResults(current.name);
-        const allJournals = getSavedJournals(current.name);
-
         const studentRes = allRes.filter((r) =>
           (r?.studentName || '').toLowerCase() === current.name.toLowerCase() ||
           (r?.studentName || '').toLowerCase() === (current.username || '').toLowerCase()
@@ -55,19 +56,16 @@ export const HistoryView: React.FC = () => {
 
         setResults(studentRes);
         setJournals(studentJournals);
-      } else {
-        setResults([]);
-        setJournals([]);
       }
     };
 
-    syncActiveUser();
-    const timer = setInterval(syncActiveUser, 400);
-    window.addEventListener('storage', syncActiveUser);
+    loadHistory();
+    const timer = setInterval(loadHistory, 3000);
+    window.addEventListener('storage', loadHistory);
 
     return () => {
       clearInterval(timer);
-      window.removeEventListener('storage', syncActiveUser);
+      window.removeEventListener('storage', loadHistory);
     };
   }, [activeUser?.id]);
 

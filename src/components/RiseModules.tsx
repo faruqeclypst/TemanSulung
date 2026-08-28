@@ -23,15 +23,19 @@ interface RiseModulesProps {
 
 export const RiseModulesView: React.FC<RiseModulesProps> = ({ onOpenPostTest }) => {
   const [activeTab, setActiveTab] = useState<1 | 2 | 3 | 4>(1);
-  const [progress, setProgress] = useState<ModuleProgress>(getModuleProgress());
+  const [progress, setProgress] = useState<ModuleProgress>({
+    module1: false,
+    module2: false,
+    module3: false,
+    module4: false,
+  });
 
   useEffect(() => {
-    const sync = () => {
-      setProgress(getModuleProgress());
+    const sync = async () => {
+      const p = await getModuleProgress();
+      setProgress(p);
     };
     sync();
-    const interval = setInterval(sync, 500);
-    return () => clearInterval(interval);
   }, []);
 
   // --- Functional Timer State ---
@@ -58,15 +62,15 @@ export const RiseModulesView: React.FC<RiseModulesProps> = ({ onOpenPostTest }) 
     };
   }, [isRunning, timeLeft]);
 
-  const handleSelectMinutes = (mins: number) => {
-    setSelectedMinutes(mins);
-    setTimeLeft(mins * 60);
+  const handleSelectMinutes = (m: number) => {
     setIsRunning(false);
+    setSelectedMinutes(m);
+    setTimeLeft(m * 60);
     setIsFinished(false);
   };
 
   const handleToggleTimer = () => {
-    if (timeLeft === 0) {
+    if (isFinished || timeLeft === 0) {
       setTimeLeft(selectedMinutes * 60);
       setIsFinished(false);
     }
@@ -85,9 +89,10 @@ export const RiseModulesView: React.FC<RiseModulesProps> = ({ onOpenPostTest }) 
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
 
-  const toggleCompletion = (modKey: keyof ModuleProgress) => {
-    const updated = updateModuleProgress({ [modKey]: !progress[modKey] });
-    setProgress(updated);
+  const toggleCompletion = async (modKey: keyof ModuleProgress) => {
+    const nextVal = !progress[modKey];
+    setProgress((prev) => ({ ...prev, [modKey]: nextVal }));
+    await updateModuleProgress({ [modKey]: nextVal });
   };
 
   return (

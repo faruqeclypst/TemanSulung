@@ -2,11 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { IconUser, IconCheckCircle } from './CustomIcons';
 import { 
   getActiveUserProfile, 
-  getUserProfiles, 
   setActiveUserProfile, 
-  saveUserProfile, 
-  fetchOnlineProfilesList 
+  saveUserProfile 
 } from '../services/storage';
+import { onlineDb } from '../services/onlineDb';
 import { UserProfile } from '../types';
 
 interface UserProfileBarProps {
@@ -40,20 +39,32 @@ export const UserProfileBar: React.FC<UserProfileBarProps> = ({ onProfileChanged
 
   useEffect(() => {
     refreshProfiles();
+    const timer = setInterval(() => {
+      setActiveUser(getActiveUserProfile());
+    }, 400);
+    return () => clearInterval(timer);
   }, []);
 
   const refreshProfiles = async () => {
-    const list = getUserProfiles();
-    const active = getActiveUserProfile();
-    setProfiles(list);
-    setActiveUser(active);
-
     setLoadingOnline(true);
     try {
-      const updatedList = await fetchOnlineProfilesList();
-      setProfiles(updatedList);
-      const updatedActive = getActiveUserProfile();
-      setActiveUser(updatedActive);
+      const list = await onlineDb.fetchProfiles();
+      setProfiles(list);
+      const active = getActiveUserProfile();
+      
+      if (active && active.id !== 'admin_bk' && active.username !== 'admin') {
+        const exists = list.some(
+          (p) => p.id === active.id || (p.username && p.username.toLowerCase() === (active.username || '').toLowerCase())
+        );
+        if (!exists) {
+          setActiveUserProfile(null);
+          setActiveUser(null);
+        } else {
+          setActiveUser(active);
+        }
+      } else {
+        setActiveUser(active);
+      }
     } catch (err) {
       console.warn('Online sync profile error:', err);
     } finally {
@@ -107,7 +118,7 @@ export const UserProfileBar: React.FC<UserProfileBarProps> = ({ onProfileChanged
     }
   };
 
-  const handleSaveOrLoginProfile = (e: React.FormEvent) => {
+  const handleSaveOrLoginProfile = async (e: React.FormEvent) => {
     e.preventDefault();
     const cleanName = fullName.trim();
     const cleanUsername = (newUsername.trim() || cleanName).toLowerCase().replace(/\s+/g, '_');
@@ -126,10 +137,10 @@ export const UserProfileBar: React.FC<UserProfileBarProps> = ({ onProfileChanged
       setActiveUserProfile(existing);
       p = existing;
     } else {
-      p = saveUserProfile(cleanName || cleanUsername, newAge, newPin.trim() || '1234', cleanUsername);
+      p = await saveUserProfile(cleanName || cleanUsername, newAge, newPin.trim() || '1234', cleanUsername);
     }
 
-    refreshProfiles();
+    await refreshProfiles();
     setShowAddForm(false);
     setFullName('');
     setNewUsername('');

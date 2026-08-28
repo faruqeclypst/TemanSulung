@@ -28,11 +28,11 @@ export const onlineDb = {
       const data = await res.json();
       if (!data) return [];
       
-      // Convert object map to array
+      // Convert object map to array and filter out nulls/falsy
       if (typeof data === 'object') {
-        return Object.values(data) as UserProfile[];
+        return Object.values(data).filter(Boolean) as UserProfile[];
       }
-      return Array.isArray(data) ? data : [];
+      return Array.isArray(data) ? data.filter(Boolean) : [];
     } catch (err) {
       console.warn('Error fetching online profiles:', err);
       return [];
@@ -58,6 +58,10 @@ export const onlineDb = {
       const res = await fetch(`${getDbUrl()}/profiles/${profileId}.json`, {
         method: 'DELETE',
       });
+      // Also clean up module progress online
+      await fetch(`${getDbUrl()}/module_progress/${profileId}.json`, {
+        method: 'DELETE',
+      }).catch(() => {});
       return res.ok;
     } catch (err) {
       console.warn('Error deleting profile online:', err);
@@ -74,9 +78,9 @@ export const onlineDb = {
       if (!data) return [];
 
       if (typeof data === 'object') {
-        return Object.values(data) as SimpleResult[];
+        return Object.values(data).filter(Boolean) as SimpleResult[];
       }
-      return Array.isArray(data) ? data : [];
+      return Array.isArray(data) ? data.filter(Boolean) : [];
     } catch (err) {
       console.warn('Error fetching online results:', err);
       return [];
@@ -85,14 +89,28 @@ export const onlineDb = {
 
   async saveResult(result: SimpleResult): Promise<boolean> {
     try {
-      const res = await fetch(`${getDbUrl()}/results.json`, {
-        method: 'POST',
+      const resultId = result.id || `res_${Date.now()}`;
+      const payload = { ...result, id: resultId };
+      const res = await fetch(`${getDbUrl()}/results/${resultId}.json`, {
+        method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(result),
+        body: JSON.stringify(payload),
       });
       return res.ok;
     } catch (err) {
       console.warn('Error saving result online:', err);
+      return false;
+    }
+  },
+
+  async deleteResult(resultId: string): Promise<boolean> {
+    try {
+      const res = await fetch(`${getDbUrl()}/results/${resultId}.json`, {
+        method: 'DELETE',
+      });
+      return res.ok;
+    } catch (err) {
+      console.warn('Error deleting result online:', err);
       return false;
     }
   },
@@ -106,9 +124,9 @@ export const onlineDb = {
       if (!data) return [];
 
       if (typeof data === 'object') {
-        return Object.values(data) as CBTJournalEntry[];
+        return Object.values(data).filter(Boolean) as CBTJournalEntry[];
       }
-      return Array.isArray(data) ? data : [];
+      return Array.isArray(data) ? data.filter(Boolean) : [];
     } catch (err) {
       console.warn('Error fetching online journals:', err);
       return [];
@@ -117,14 +135,28 @@ export const onlineDb = {
 
   async saveJournal(entry: CBTJournalEntry): Promise<boolean> {
     try {
-      const res = await fetch(`${getDbUrl()}/journals.json`, {
-        method: 'POST',
+      const journalId = entry.id || `jnl_${Date.now()}`;
+      const payload = { ...entry, id: journalId };
+      const res = await fetch(`${getDbUrl()}/journals/${journalId}.json`, {
+        method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(entry),
+        body: JSON.stringify(payload),
       });
       return res.ok;
     } catch (err) {
       console.warn('Error saving journal online:', err);
+      return false;
+    }
+  },
+
+  async deleteJournal(journalId: string): Promise<boolean> {
+    try {
+      const res = await fetch(`${getDbUrl()}/journals/${journalId}.json`, {
+        method: 'DELETE',
+      });
+      return res.ok;
+    } catch (err) {
+      console.warn('Error deleting journal online:', err);
       return false;
     }
   },
@@ -135,7 +167,7 @@ export const onlineDb = {
       const res = await fetch(`${getDbUrl()}/module_progress.json`);
       if (!res.ok) return {};
       const data = await res.json();
-      return data || {};
+      return (data && typeof data === 'object') ? data : {};
     } catch (err) {
       console.warn('Error fetching all module progress online:', err);
       return {};
@@ -167,6 +199,7 @@ export const onlineDb = {
     }
   },
 
+  // --- CLEAR / RESET ALL DATABASE ONLINE ---
   async clearAllData(): Promise<boolean> {
     try {
       const res = await fetch(`${getDbUrl()}/.json`, { method: 'DELETE' });

@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   IconHeart, 
   IconSparkles, 
@@ -11,7 +11,7 @@ import {
   IconBrain 
 } from './CustomIcons';
 import { SimpleResult } from '../types';
-import { getStudentLatestPreTest, getStudentLatestPostTest } from '../services/storage';
+import { onlineDb } from '../services/onlineDb';
 
 interface AssessmentResultProps {
   result: SimpleResult;
@@ -28,14 +28,30 @@ export const AssessmentResultView: React.FC<AssessmentResultProps> = ({
   onRetake,
   onTakePostTest,
 }) => {
+  const [studentPreTest, setStudentPreTest] = useState<SimpleResult | null>(result.testType === 'pre' ? result : null);
+  const [studentPostTest, setStudentPostTest] = useState<SimpleResult | null>(result.testType === 'post' ? result : null);
+
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
-  }, []);
 
-  const studentPreTest = getStudentLatestPreTest(result.studentName);
-  const studentPostTest = getStudentLatestPostTest(result.studentName);
+    const fetchComparison = async () => {
+      try {
+        const all = await onlineDb.fetchResults();
+        const studentResults = all.filter(
+          (r) => (r?.studentName || '').toLowerCase() === result.studentName.toLowerCase()
+        );
+        const pre = studentResults.find((r) => r.testType === 'pre' || !r.testType);
+        const post = studentResults.find((r) => r.testType === 'post');
+        if (pre) setStudentPreTest(pre);
+        if (post) setStudentPostTest(post);
+      } catch (e) {
+        console.warn(e);
+      }
+    };
+    fetchComparison();
+  }, [result]);
+
   const hasBothTests = studentPreTest && studentPostTest;
-
   const gainPoints = hasBothTests ? (studentPostTest.score - studentPreTest.score) : 0;
 
   return (
